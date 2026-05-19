@@ -4,6 +4,15 @@
 	ViewData["Title"] = "Создание заказа";
 }
 
+<style>
+	.subservice-item-modal:hover {
+		background-color: #f8f9fa;
+	}
+	.subservice-item-modal .form-check-label strong {
+		font-size: 1rem;
+	}
+</style>
+
 <div class="container mt-4">
 	<h2>@ViewData["Title"]</h2>
 	<hr />
@@ -144,43 +153,67 @@
 	$(document).ready(function() {
 		// Модальное окно для выбора подуслуг
 		$('#add-subservice').click(function() {
-			$.get('/Subservice/GetAll', function(data) {
+			$.get('/Service/GetAllWithSubservices', function(data) {
 				if (data.success) {
 					let modalHtml = `
 						<div class="modal fade" id="subserviceModal" tabindex="-1">
-							<div class="modal-dialog modal-lg">
+							<div class="modal-dialog modal-lg modal-dialog-scrollable">
 								<div class="modal-content">
 									<div class="modal-header">
 										<h5 class="modal-title">Выберите подуслуги</h5>
 										<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 									</div>
 									<div class="modal-body">
-										<table class="table">
-											<thead>
-												<tr>
-													<th>Выбрать</th>
-													<th>Название</th>
-													<th>Цена</th>
-												</tr>
-											</thead>
-											<tbody>`;
+										<div class="accordion" id="subserviceAccordion">`;
 
-					data.subservices.forEach(sub => {
-						modalHtml += `
-							<tr>
-								<td><input type="checkbox" class="subservice-check"
-										data-id="${sub.id}"
-										data-name="${sub.name}"
-										data-price="${sub.price.toString().replace(',', '.')}"
-										data-leadtime="${sub.leadTime}" /></td>
-								<td>${sub.name}</td>
-								<td>${sub.price.toLocaleString('ru-RU', {minimumFractionDigits: 2})} BYN</td>
-							</tr>`;
+					data.services.forEach(function(service, index) {
+						if (service.subservices && service.subservices.length > 0) {
+							modalHtml += `
+								<div class="accordion-item">
+									<h2 class="accordion-header" id="heading-${service.id}">
+										<button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button"
+												data-bs-toggle="collapse" data-bs-target="#collapse-${service.id}"
+												aria-controls="collapse-${service.id}">
+											${service.name}
+										</button>
+									</h2>
+									<div id="collapse-${service.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}"
+											aria-labelledby="heading-${service.id}">
+										<div class="accordion-body p-2">
+											<div class="list-group">`;
+
+							service.subservices.forEach(function(sub) {
+								modalHtml += `
+									<div class="list-group-item subservice-item-modal d-flex justify-content-between align-items-center">
+										<div class="form-check">
+											<input class="form-check-input subservice-check" type="checkbox"
+													data-id="${sub.id}"
+													data-name="${sub.name}"
+													data-price="${sub.price.toString().replace(',', '.')}"
+													data-leadtime="${sub.leadTime}"
+													id="sub-${sub.id}" />
+											<label class="form-check-label" for="sub-${sub.id}">
+												<strong>${sub.name}</strong>
+												${sub.description ? '<br/><small class="text-muted">' + sub.description + '</small>' : ''}
+											</label>
+										</div>
+										<div class="text-end">
+											<span class="fw-bold text-success">${sub.price.toLocaleString('ru-RU', {minimumFractionDigits: 2})} BYN</span>
+											<br/><small class="text-muted">${sub.leadTime.days ? sub.leadTime.days + ' д. ' : ''}${sub.leadTime.hours ? sub.leadTime.hours + ' ч. ' : ''}${sub.leadTime.minutes ? sub.leadTime.minutes + ' м.' : ''}</small>
+										</div>
+									</div>`;
+							});
+
+							modalHtml += `
+											</div>
+										</div>
+									</div>
+								</div>`;
+						}
 					});
 
 					modalHtml += `
-											</tbody>
-										</table>
+										</div>
 									</div>
 									<div class="modal-footer">
 										<button type="button" class="btn btn-primary"

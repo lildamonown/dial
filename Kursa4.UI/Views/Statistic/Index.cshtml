@@ -2,104 +2,249 @@
 @model List<StatisticDTO>
 
 @{
-    ViewData["Title"] = "Статистика подсервисов";
+	ViewData["Title"] = "Статистика подсервисов";
+	var totalCount = Model.Sum(s => s.Count);
+	var colors = new[] {
+		"rgba(78, 115, 223, 0.85)",
+		"rgba(54, 185, 204, 0.85)",
+		"rgba(28, 200, 138, 0.85)",
+		"rgba(246, 194, 62, 0.85)",
+		"rgba(231, 74, 59, 0.85)",
+		"rgba(133, 135, 150, 0.85)"
+	};
 }
 
 <div class="container mt-5">
-    <h1 class="mb-4">Статистика подсервисов</h1>
+	<h1 class="mb-4">
+		Статистика подсервисов
+		@if (totalCount > 0)
+		{
+			<small class="text-muted fs-6">— всего @totalCount использований</small>
+		}
+	</h1>
 
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <form method="get" class="row g-3">
-                <div class="col-md-8">
-                    <input type="month" class="form-control" name="date" value="@ViewBag.SelectedDate"
-                           max="@DateTime.Now.ToString("yyyy-MM")" />
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary">Показать</button>
-                </div>
-            </form>
-        </div>
-    </div>
+	<div class="row mb-4">
+		<div class="col-md-8">
+			<form method="get" class="row g-3">
+				<div class="col-md-4">
+					<select class="form-select" name="month">
+						@for (int m = 1; m <= 12; m++)
+						{
+							<option value="@m" selected="@(m == ViewBag.SelectedMonth ? true : null)">
+								@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)
+							</option>
+						}
+					</select>
+				</div>
+				<div class="col-md-4">
+					<select class="form-select" name="year">
+						@for (int y = 2024; y <= DateTime.Now.Year; y++)
+						{
+							<option value="@y" selected="@(y == ViewBag.SelectedYear ? true : null)">@y</option>
+						}
+					</select>
+				</div>
+				<div class="col-md-4">
+					<button type="submit" class="btn btn-primary">Показать</button>
+					<a asp-action="Index" class="btn btn-secondary">Сброс</a>
+				</div>
+			</form>
+		</div>
+	</div>
 
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">График статистики</h5>
-        </div>
-        <div class="card-body">
-            <div class="chart-bar">
-                <canvas id="myBarChart"></canvas>
-            </div>
-        </div>
-    </div>
+	@if (!Model.Any())
+	{
+		<div class="alert alert-info">Нет данных за выбранный период.</div>
+	}
+	else
+	{
+		<div class="card shadow mb-4">
+			<div class="card-header py-3 d-flex justify-content-between align-items-center">
+				<h5 class="m-0 font-weight-bold text-primary">График статистики</h5>
+				<div class="btn-group btn-group-sm" role="group">
+					<button type="button" class="btn btn-outline-primary active" id="chartBarBtn">Столбцы</button>
+					<button type="button" class="btn btn-outline-primary" id="chartPieBtn">Круг</button>
+				</div>
+			</div>
+			<div class="card-body">
+				<div style="position: relative; height: @(Math.Max(250, Model.Count * 35))px;">
+					<canvas id="statChart"></canvas>
+				</div>
+			</div>
+		</div>
 
-    <div class="card shadow">
-        <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">Таблица данных</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Подсервис</th>
-                            <th>Количество</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>@item.NameSubservice</td>
-                                <td>@item.Count</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+		<div class="card shadow">
+			<div class="card-header py-3">
+				<h5 class="m-0 font-weight-bold text-primary">Таблица данных</h5>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table table-bordered" width="100%" cellspacing="0">
+						<thead class="table-dark">
+							<tr>
+								<th>#</th>
+								<th>Подсервис</th>
+								<th>Количество</th>
+								<th>Доля</th>
+							</tr>
+						</thead>
+						<tbody>
+							@{
+								int i = 1;
+							}
+							@foreach (var item in Model)
+							{
+								var pct = totalCount > 0 ? (item.Count * 100.0 / totalCount) : 0;
+								<tr>
+									<td>@(i++)</td>
+									<td>@item.NameSubservice</td>
+									<td>@item.Count</td>
+									<td>
+										<div class="d-flex align-items-center gap-2">
+											<div class="progress flex-grow-1" style="height: 8px;">
+												<div class="progress-bar" role="progressbar"
+													 style="width: @pct.ToString("F1")%; background-color: @colors[(i - 2) % colors.Length];"
+													 aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+											</div>
+											<small class="text-muted">@pct.ToString("F1")%</small>
+										</div>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var labels = @Html.Raw(Json.Serialize(Model.Select(s => s.NameSubservice).ToArray()));
-        var data = @Html.Raw(Json.Serialize(Model.Select(s => s.Count).ToArray()));
+	document.addEventListener('DOMContentLoaded', function () {
+		const labels = @Html.Raw(Json.Serialize(Model.Select(s => s.NameSubservice).ToArray()));
+		const data = @Html.Raw(Json.Serialize(Model.Select(s => s.Count).ToArray()));
+		const total = data.reduce((a, b) => a + b, 0);
+		const colorSet = ["rgba(78,115,223,0.85)", "rgba(54,185,204,0.85)", "rgba(28,200,138,0.85)", "rgba(246,194,62,0.85)", "rgba(231,74,59,0.85)", "rgba(133,135,150,0.85)"];
+		const borderSet = colorSet.map(c => c.replace('0.85', '1'));
 
-        var ctx = document.getElementById('myBarChart').getContext('2d');
-        var myBarChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Количество использований',
-                    data: data,
-                    backgroundColor: 'rgba(78, 115, 223, 0.8)',
-                    borderColor: 'rgba(78, 115, 223, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
-    });
+		const bgColors = data.map((_, idx) => colorSet[idx % colorSet.length]);
+		const brColors = data.map((_, idx) => borderSet[idx % borderSet.length]);
+
+		const ctx = document.getElementById('statChart').getContext('2d');
+
+		let currentChart;
+
+		function renderBar() {
+			if (currentChart) currentChart.destroy();
+			currentChart = new Chart(ctx, {
+				type: 'bar',
+				data: {
+					labels: labels,
+					datasets: [{
+						label: 'Количество использований',
+						data: data,
+						backgroundColor: bgColors,
+						borderColor: brColors,
+						borderWidth: 1,
+						borderRadius: 4
+					}]
+				},
+				options: {
+					indexAxis: 'y',
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							callbacks: {
+								label: function(ctx) {
+									const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+									return ctx.raw + ' (' + pct + '%)';
+								}
+							}
+						}
+					},
+					scales: {
+						x: {
+							beginAtZero: true,
+							ticks: { precision: 0 }
+						},
+						y: {
+							ticks: {
+								font: { size: 11 }
+							}
+						}
+					}
+				},
+				plugins: [{
+					afterDraw: function(chart) {
+						const ctx2 = chart.ctx;
+						chart.data.datasets.forEach(function(ds, dsIdx) {
+							const meta = chart.getDatasetMeta(dsIdx);
+							meta.data.forEach(function(bar, idx) {
+								const val = ds.data[idx];
+								if (val === 0) return;
+								const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+								ctx2.fillStyle = '#333';
+								ctx2.font = 'bold 12px sans-serif';
+								ctx2.textAlign = 'left';
+								ctx2.textBaseline = 'middle';
+								ctx2.fillText(val + ' (' + pct + '%)', bar.x + 6, bar.y);
+							});
+						});
+					}
+				}]
+			});
+		}
+
+		function renderPie() {
+			if (currentChart) currentChart.destroy();
+			currentChart = new Chart(ctx, {
+				type: 'doughnut',
+				data: {
+					labels: labels,
+					datasets: [{
+						data: data,
+						backgroundColor: bgColors,
+						borderColor: brColors,
+						borderWidth: 2
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							position: 'right',
+							labels: { font: { size: 11 } }
+						},
+						tooltip: {
+							callbacks: {
+								label: function(ctx) {
+									const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+									return ctx.label + ': ' + ctx.raw + ' (' + pct + '%)';
+								}
+							}
+						}
+					}
+				}
+			});
+		}
+
+		if (labels.length > 0) {
+			renderBar();
+
+			document.getElementById('chartBarBtn').addEventListener('click', function() {
+				this.classList.add('active');
+				document.getElementById('chartPieBtn').classList.remove('active');
+				renderBar();
+			});
+			document.getElementById('chartPieBtn').addEventListener('click', function() {
+				this.classList.add('active');
+				document.getElementById('chartBarBtn').classList.remove('active');
+				renderPie();
+			});
+		}
+	});
 </script>

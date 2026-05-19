@@ -5,89 +5,126 @@
 }
 
 <div class="container mt-4">
-	<h2>@ViewData["Title"]</h2>
+	<h2 class="mb-4">@ViewData["Title"]</h2>
+
+	<div class="row mb-4">
+		<div class="col-md-8">
+			<form method="get" class="row g-3">
+				<div class="col-md-4">
+					<select class="form-select" name="month">
+						@for (int m = 1; m <= 12; m++)
+						{
+							<option value="@m" selected="@(m == ViewBag.SelectedMonth ? true : null)">
+								@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)
+							</option>
+						}
+					</select>
+				</div>
+				<div class="col-md-4">
+					<select class="form-select" name="year">
+						@for (int y = 2024; y <= DateTime.Now.Year; y++)
+						{
+							<option value="@y" selected="@(y == ViewBag.SelectedYear ? true : null)">@y</option>
+						}
+					</select>
+				</div>
+				<div class="col-md-4">
+					<button type="submit" class="btn btn-primary">Показать</button>
+					<a asp-action="Index" class="btn btn-secondary">Сброс</a>
+				</div>
+			</form>
+		</div>
+	</div>
 
 	<table class="table table-striped table-hover">
 		<thead class="table-dark">
 			<tr>
-				<th>Id</th>
-				<th>Заказ</th>
-				<th>Финальная цена</th>
+				<th style="width: 40px;"></th>
+				<th>№</th>
+				<th>Клиент</th>
+				<th>Авто</th>
+				<th>Подуслуги</th>
+				<th>Сумма</th>
 				<th>Дата завершения</th>
 				<th>Мастер</th>
 			</tr>
 		</thead>
-		<tbody class="text-center">
+		<tbody>
 			@foreach (var item in Model)
 			{
 				<tr>
-					<td>@item.Id</td>
 					<td>
-						<div class="mb-3">
-							<div class="input-group">
-								<button type="button" data-order-id="@item.OrderId" class="btn btn-primary orderInfoBtn"
-									data-bs-toggle="modal" data-bs-target="#orderModal">
-									<i class="bi bi-info-circle"></i> Инфо о заказе
-								</button>
+						<button type="button" class="btn btn-sm btn-outline-primary order-info-toggle"
+								data-order-id="@item.OrderId">
+							<i class="bi bi-info-circle"></i>
+						</button>
+					</td>
+					<td>@item.OrderId</td>
+					<td>
+						<strong>@item.ClientName</strong><br />
+						<small class="text-muted">@item.ClientPhone</small>
+					</td>
+					<td>@item.CarMark</td>
+					<td>
+						@if (item.OrderSubservices.Any())
+						{
+							<ul class="list-unstyled mb-0">
+								@foreach (var sub in item.OrderSubservices)
+								{
+									<li><small>@sub</small></li>
+								}
+							</ul>
+						}
+						else
+						{
+							<span class="text-muted">—</span>
+						}
+					</td>
+					<td class="fw-bold">@item.OrderSumPrice.ToString("N2") BYN</td>
+					<td>@item.DateCompleted.ToString("dd.MM.yyyy HH:mm")</td>
+					<td>@item.NameMaster @item.SurnameMaster</td>
+				</tr>
+				<tr class="order-details-row" style="display:none;" data-order-id="@item.OrderId">
+					<td colspan="8">
+						<div class="p-3 bg-light">
+							<div class="text-center">
+								<div class="spinner-border text-primary" role="status">
+									<span class="visually-hidden">Загрузка...</span>
+								</div>
 							</div>
 						</div>
 					</td>
-					<td>@item.FinitePrice</td>
-					<td>@item.DateCompleted</td>
-					<td>@item.NameMaster @item.SurnameMaster</td>
 				</tr>
 			}
 		</tbody>
 	</table>
 </div>
 
-<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-lg">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="orderModalLabel">Информация о заказе #<span id="modalOrderId"></span></h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body" id="orderDetailsContent">
-				<div class="text-center">
-					<div class="spinner-border text-primary" role="status">
-						<span class="visually-hidden">Загрузка...</span>
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-			</div>
-		</div>
-	</div>
-</div>
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 	$(document).ready(function() {
-		$('.orderInfoBtn').click(function() {
+		$('.order-info-toggle').click(function() {
 			const orderId = $(this).data('order-id');
+			const row = $(`.order-details-row[data-order-id="${orderId}"]`);
 
-			$('#modalOrderId').text(orderId);
-			console.log(orderId)
+			if (row.is(':visible')) {
+				row.hide();
+				return;
+			}
+
+			row.show();
 
 			$.get('/Order/GetById', { orderId: orderId })
 				.done(function(response) {
 					if (response.success) {
 						const order = response.order;
-						$('#orderDetailsContent').html(`
-							<div class="row mb-3">
-								<div class="col-md-6">
-									<p><strong>Клиент:</strong> ${order.userName} ${order.userSurname}</p>
-									<p class="text-dark"><strong>Телефон:</strong> ${order.userPhoneNumber}</p>
-								</div>
-								<div class="col-md-6">
-									<p><strong>Дата создания:</strong> ${new Date(order.createAt).toLocaleString()}</p>
-									<p><strong>Предварительная цена:</strong> ${order.sumPrice.toFixed(2)}</p>
-								</div>
-							</div>
+						row.find('td > div').html(`
 							<div class="row">
 								<div class="col-12">
+									<p><strong>Клиент:</strong> ${order.userName} ${order.userSurname} <span class="text-muted">${order.userPhoneNumber}</span></p>
+									<p><strong>Дата создания:</strong> ${new Date(order.createAt).toLocaleString()}</p>
+									<p><strong>Статус:</strong> ${order.statusName || ''}</p>
+									<p><strong>Предв. цена:</strong> ${order.sumPrice.toFixed(2)} BYN</p>
 									<h6>Подуслуги:</h6>
 									<ul class="list-group">
 										${order.nameSubservice.map(sub => `<li class="list-group-item">${sub}</li>`).join('')}
@@ -96,31 +133,12 @@
 							</div>
 						`);
 					} else {
-						$('#orderDetailsContent').html(`
-							<div class="alert alert-danger">
-								${response.message || 'Произошла ошибка при получении данных о заказе'}
-							</div>
-						`);
+						row.find('td > div').html(`<div class="alert alert-danger mb-0">${response.message || 'Ошибка загрузки'}</div>`);
 					}
 				})
 				.fail(function() {
-					$('#orderDetailsContent').html(`
-						<div class="alert alert-danger">
-							Ошибка соединения с сервером
-						</div>
-					`);
+					row.find('td > div').html(`<div class="alert alert-danger mb-0">Ошибка соединения</div>`);
 				});
-		});
-
-		// Очищаем модальное окно при закрытии
-		$('#orderModal').on('hidden.bs.modal', function () {
-			$('#orderDetailsContent').html(`
-				<div class="text-center">
-					<div class="spinner-border text-primary" role="status">
-						<span class="visually-hidden">Загрузка...</span>
-					</div>
-				</div>
-			`);
 		});
 	});
 </script>

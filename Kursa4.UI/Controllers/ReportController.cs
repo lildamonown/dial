@@ -6,34 +6,43 @@ using Kursa4.DAL.Entities;
 using Kursa4.UI.Models;
 using Kursa4.UI.Models.Inputs;
 using Kursa4.UI.Models.Outputs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace Kursa4.UI.Controllers
 {
+    [Authorize(Roles = "Admin,Owner,Economist")]
     public class ReportController : Controller
     {
         private readonly IReportService _reportService;
         private readonly IOrderService _orderService;
         private readonly IStatusService _statusService;
+        private readonly ICarService _carService;
         private readonly UserManager<User> _userManager;
 
         private IMapper _mapper;
 
         public ReportController(IReportService reportService, IOrderService orderService, IMapper mapper, 
-            UserManager<User> userManager, IStatusService statusService)
+            UserManager<User> userManager, IStatusService statusService, ICarService carService)
         {
             _reportService = reportService;
             _orderService = orderService;
             _mapper = mapper;
             _userManager = userManager;
             _statusService = statusService;
+            _carService = carService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? year, int? month)
         {
+            var targetYear = year ?? DateTime.Now.Year;
+            var targetMonth = month ?? DateTime.Now.Month;
+            ViewBag.SelectedYear = targetYear;
+            ViewBag.SelectedMonth = targetMonth;
+
             var result = await _reportService.GetAllAsync();
 
             if(result.Status != BLL.Models.StatusCode.Ok)
@@ -46,7 +55,33 @@ namespace Kursa4.UI.Controllers
                     });
             }
 
-            var mapp = _mapper.Map<List<ReportModel>>(result.Value);
+            var filtered = result.Value
+                .Where(r => r.DateCompleted.Year == targetYear && r.DateCompleted.Month == targetMonth)
+                .ToList();
+
+            var mapp = _mapper.Map<List<ReportModel>>(filtered);
+
+            foreach (var report in mapp)
+            {
+                var orderResult = await _orderService.GetByIdAsync(report.OrderId);
+                if (orderResult.Status == BLL.Models.StatusCode.Ok)
+                {
+                    var order = orderResult.Value;
+                    report.OrderSubservices = order.Subservices?.Select(s => s.Name).ToList() ?? [];
+                    report.OrderSumPrice = order.Subservices?.Sum(s => s.Price) ?? 0;
+
+                    var carResult = await _carService.GetByIdAsync(order.CarId);
+                    if (carResult.Status == BLL.Models.StatusCode.Ok)
+                        report.CarMark = carResult.Value.Mark;
+
+                    var user = await _userManager.FindByIdAsync(order.UserId);
+                    if (user != null)
+                    {
+                        report.ClientName = $"{user.Name} {user.Surname}";
+                        report.ClientPhone = user.PhoneNumber ?? "";
+                    }
+                }
+            }
 
             return View(mapp);
         }

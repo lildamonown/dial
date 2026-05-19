@@ -76,6 +76,9 @@ namespace Kursa4.UI.Controllers
         {
             if (!ModelState.IsValid)
             {
+                if (string.IsNullOrWhiteSpace(order.Car.Mark))
+                    ModelState.AddModelError("Car", "Добавьте автомобиль");
+
                 var brandsResult = await _carBrandService.GetAllAsync();
                 if (brandsResult.Status == BLL.Models.StatusCode.Ok)
                 {

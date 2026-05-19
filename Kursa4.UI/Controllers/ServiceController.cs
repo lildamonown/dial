@@ -143,5 +143,40 @@ namespace Kursa4.UI.Controllers
 
             return RedirectToAction("Index");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllWithSubservices()
+        {
+            var resultService = await _serviceService.GetAllAsync();
+
+            if (resultService.Status != BLL.Models.StatusCode.Ok)
+            {
+                return Json(new { success = false, message = resultService.Description });
+            }
+
+            var serviceModels = new List<ServiceModel>();
+
+            foreach (var service in resultService.Value)
+            {
+                var mapService = _mapper.Map<ServiceModel>(service);
+
+                var resultSubservices = await _subserviceService.GetAllByIdServiceAsync(mapService.Id);
+
+                if (resultSubservices.Status != BLL.Models.StatusCode.Ok)
+                {
+                    return Json(new { success = false, message = resultSubservices.Description });
+                }
+
+                var subserviceModels = _mapper.Map<List<SubserviceModel>>(resultSubservices.Value);
+                subserviceModels.RemoveAll(s => !s.Visible);
+                mapService.Subservices = subserviceModels;
+
+                serviceModels.Add(mapService);
+            }
+
+            serviceModels.Sort((x, y) => x.Name.CompareTo(y.Name));
+
+            return Json(new { success = true, services = serviceModels });
+        }
     }
 }

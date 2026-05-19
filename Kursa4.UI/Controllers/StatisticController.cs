@@ -12,13 +12,14 @@ namespace Kursa4.UI.Controllers
             _statisticService = statisticService;
         }
 
-        public async Task<IActionResult> Index(DateTime? date)
+        public async Task<IActionResult> Index(int? year, int? month)
         {
-            var targetDate = date ?? DateTime.Now;
+            var targetDate = new DateTime(year ?? DateTime.Now.Year, month ?? DateTime.Now.Month, 1);
 
             var statistics = (await _statisticService.GetStatisticsAsync(targetDate)).Value;
 
-            ViewBag.SelectedDate = targetDate.ToString("yyyy-MM");
+            ViewBag.SelectedYear = targetDate.Year;
+            ViewBag.SelectedMonth = targetDate.Month;
 
             return View(statistics);
         }

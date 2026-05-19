@@ -39,9 +39,12 @@
                     {
                         <tr>
                             <th scope="row">
-                                <a href="@Url.Action("Edit", "Order", new { orderId = order.Id })" class="link-underline-none">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
+                                @if (User.IsInRole("Master") || User.IsInRole("Admin") || User.IsInRole("Owner") || User.IsInRole("Economist"))
+                                {
+                                    <a href="@Url.Action("Edit", "Order", new { orderId = order.Id })" class="link-underline-none">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                }
                                 @order.Id
                             </th>
                             <td>@order.UserName</td>

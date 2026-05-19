@@ -20,5 +20,11 @@ namespace Kursa4.UI.Models.Outputs
 
         [Display(Name = "Фамилия мастера")]
         public string SurnameMaster { get; set; } = string.Empty;
+
+        public List<string> OrderSubservices { get; set; } = [];
+        public double OrderSumPrice { get; set; }
+        public string CarMark { get; set; } = string.Empty;
+        public string ClientName { get; set; } = string.Empty;
+        public string ClientPhone { get; set; } = string.Empty;
     }
 }

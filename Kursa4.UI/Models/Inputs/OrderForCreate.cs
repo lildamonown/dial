@@ -13,6 +13,7 @@ namespace Kursa4.UI.Models.Inputs
 
         public int StatusId { get; set; }
 
+        [Required(ErrorMessage = "Выберите дату визита")]
         [Display(Name = "Когда хотите приехать")]
         public DateTime? VisitDate { get; set; }
 
