@@ -1,0 +1,342 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ДипломнаяРабота СТО</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Kursa4.UI.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+        }
+
+        /* Легкий градиент для контраста */
+        .container, main {
+            background: transparent;
+        }
+        /* Дополнительные стили для увеличенного navbar */
+        .navbar {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+            .navbar .nav-link {
+                font-size: 1.4rem;
+                padding: 0.6rem 1rem;
+            }
+
+        .navbar-brand {
+            font-size: 1.3rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.2rem;
+            font-size: 1rem;
+        }
+        /* Увеличенные кнопки Вход и Регистрация */
+        .btn-login {
+            padding: 0.7rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .btn-register {
+            padding: 0.7rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .navbar .container-fluid {
+            padding-top: 0.2rem;
+            padding-bottom: 0.2rem;
+        }
+
+        /* Стили для блока преимуществ */
+        .about-company {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 60px 0;
+            margin-top: 40px;
+        }
+
+        .about-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            position: relative;
+            display: inline-block;
+        }
+
+            .about-title:after {
+                content: '';
+                position: absolute;
+                bottom: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 80px;
+                height: 4px;
+                background: #007bff;
+                border-radius: 2px;
+            }
+
+        .advantage-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid #007bff;
+        }
+
+            .advantage-item:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            }
+
+        .advantage-icon {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .advantage-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #495057;
+        }
+
+        .company-footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 0;
+            margin-top: 40px;
+        }
+
+            .company-footer h5 {
+                color: #007bff;
+                margin-bottom: 20px;
+            }
+
+            .company-footer p {
+                margin-bottom: 10px;
+                line-height: 1.6;
+            }
+
+        .social-links a {
+            color: white;
+            margin-right: 15px;
+            font-size: 1.3rem;
+            transition: color 0.3s ease;
+        }
+
+            .social-links a:hover {
+                color: #007bff;
+            }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand ms-3 text-primary" asp-controller="Home" asp-action="Index">Главная</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between ms-4">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Service" asp-action="Index">Услуги</a>
+                        </li>
+
+                        @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Authorization" asp-action="GetAllUsers">Пользователи</a>
+                            </li>
+
+                            @if (User.IsInRole("Owner"))
+                            {
+                                <li class="nav-item text-end">
+                                    <a class="nav-link text-dark" asp-controller="Statistic" asp-action="Index">Статистика</a>
+                                </li>
+
+                                <li class="nav-item text-end">
+                                    <a class="nav-link text-dark" asp-controller="Report" asp-action="Index">Отчёты</a>
+                                </li>
+                            }
+                        }
+                        @if (!User.IsInRole("Client") || !User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Order" asp-action="ShowAll">Все заказы</a>
+                            </li>
+                        }
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Review" asp-action="Index">Отзывы</a>
+                        </li>
+                    </ul>
+                </div>
+
+
+
+                @if (!User.Identity.IsAuthenticated)
+                {
+                    <div class="text-end mx-4">
+                        <a asp-controller="Authorization" asp-action="Login" class="card-link btn btn-success text-white btn-login">Вход</a>
+                        <a asp-controller="Authorization" asp-action="Register" class="btn btn-outline-success btn-register">Регистрация</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-sm-inline-flex">
+                        <a asp-controller="Order" asp-action="Create" class="card-link btn btn-outline-success">Оформить заявку</a>
+
+                        <a asp-controller="Order" asp-action="ShowByUserId" class="card-link btn btn-outline-primary">Мои заказы</a>
+                    </div>
+
+                    <div class="text-end mx-4">
+                        <a id="user-info" data-user-id="@User.FindFirstValue(ClaimTypes.NameIdentifier)"></a>
+                    </div>
+
+                    <form asp-controller="Authorization" asp-action="Logout">
+                        <button class="btn btn-outline-danger">Выход</button>
+                    </form>
+                }
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Блок с преимуществами компании -->
+    <div class="about-company">
+        <div class="container">
+            <div class="text-center">
+                <h2 class="about-title">Наши преимущества</h2>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="advantage-item">
+                        <div class="advantage-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="advantage-text">
+                            <strong>Профессиональные специалисты</strong><br>
+                            Наши специалисты – профессионалы своего дела, опытные мастера с квалификацией и многолетним опытом работы.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="advantage-item">
+                        <div class="advantage-icon">
+                            <i class="fas fa-microscope"></i>
+                        </div>
+                        <div class="advantage-text">
+                            <strong>Современное оборудование</strong><br>
+                            Автосервис оснащён современным оборудованием, в том числе для проведения точных работ, которые не могут быть выполнены в гаражах и частных автомобильных мастерских.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="advantage-item">
+                        <div class="advantage-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="advantage-text">
+                            <strong>Полный спектр услуг</strong><br>
+                            У нас есть все необходимое оборудование для любых типов диагностики, проведения кузовного ремонта, слесарных работ.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="advantage-item">
+                        <div class="advantage-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="advantage-text">
+                            <strong>Качественные материалы</strong><br>
+                            В нашей работе мы используем только качественные, проверенные временем и профессионалами материалы.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="advantage-item">
+                        <div class="advantage-icon">
+                            <i class="fas fa-smile"></i>
+                        </div>
+                        <div class="advantage-text">
+                            <strong>Клиентоориентированность</strong><br>
+                            Мы сделаем всё от нас зависящее, чтобы Вы остались довольны нашей работой!
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="advantage-item">
+                        <div class="advantage-icon">
+                            <i class="fas fa-ruble-sign"></i>
+                        </div>
+                        <div class="advantage-text">
+                            <strong>Доступные цены</strong><br>
+                            Наши цены адекватны! Мы предлагаем лучшее соотношение цены и качества на рынке автоуслуг.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="company-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><i class="fas fa-car"></i> АвтоСервис Профи</h5>
+                    <p>Профессиональный ремонт и обслуживание автомобилей с 2015 года.</p>
+                    <p>Доверьте свое авто настоящим профессионалам!</p>
+                </div>
+                <div class="col-md-4">
+                    <h5><i class="fas fa-map-marker-alt"></i> Контакты</h5>
+                    <p><i class="fas fa-phone"></i> +375 (44) 492-13-64</p>
+                    <p><i class="fas fa-envelope"></i> sto@autoservice.com</p>
+                    <p><i class="fas fa-map-marker-alt"></i> г. Гомель, пр. Октября, 48а, д. 1</p>
+                </div>
+                <div class="col-md-4">
+                    <h5><i class="fas fa-clock"></i> Режим работы</h5>
+                    <p>Пн-Пт: 9:00 - 20:00</p>
+                    <p>Сб: 10:00 - 18:00</p>
+                    <p>Вс: Выходной</p>
+                    <div class="social-links mt-3">
+                        <a href="https://vk.com/lildamonown"><i class="fab fa-vk"></i></a>
+                        <a href="https://t.me/cutahaby"><i class="fab fa-telegram"></i></a>
+                        <a href="https://instagram.com/cutahaby"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - Дипломная работа - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

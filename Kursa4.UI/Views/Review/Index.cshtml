@@ -1,0 +1,134 @@
+﻿@model List<ReviewModel>
+
+@{
+	ViewData["Title"] = "Отзывы";
+	var can_delete = User.IsInRole("Admin") || User.IsInRole("Owner");
+}
+
+<div class="container mt-4">
+	<h1 class="mb-4">Отзывы (@Model.Count)</h1>
+
+	@if (User.Identity.IsAuthenticated)
+	{
+		<div class="card mb-4">
+			<div class="card-body ">
+				<h5 class="card-title">Добавить отзыв</h5>
+
+				<form method="post" asp-controller="Review" asp-action="Create">
+					<input value="@User.FindFirstValue(ClaimTypes.NameIdentifier)" name="userId" hidden />
+
+					<div class="mb-3">
+						<label class="form-label">Оцените</label>
+						<div class="rating">
+							<input type="radio" id="star5" name="rating" value="5" class="d-none" checked />
+							<label for="star5" class="fs-3"><i class="bi bi-star-fill"></i></label>
+
+							<input type="radio" id="star4" name="rating" value="4" class="d-none" />
+							<label for="star4" class="fs-3"><i class="bi bi-star-fill"></i></label>
+
+							<input type="radio" id="star3" name="rating" value="3" class="d-none" />
+							<label for="star3" class="fs-3"><i class="bi bi-star-fill"></i></label>
+
+							<input type="radio" id="star2" name="rating" value="2" class="d-none" />
+							<label for="star2" class="fs-3"><i class="bi bi-star-fill"></i></label>
+
+							<input type="radio" id="star1" name="rating" value="1" class="d-none" />
+							<label for="star1" class="fs-3"><i class="bi bi-star-fill"></i></label>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<textarea class="form-control" id="reviewText" name="text" rows="4" required placeholder="Ваш отзыв" maxlength="128"></textarea>
+					</div>
+					<button class="btn btn-primary">Отправить</button>
+				</form>
+			</div>
+		</div>
+	}
+	else
+	{
+		<div class="alert alert-info mb-4">
+			Чтобы оставить отзыв, пожалуйста, <a asp-action="Login" asp-controller="Authorization">войдите</a> в систему.
+		</div>
+	}
+
+	<div class="row">
+		@foreach (var review in Model)
+		{
+			<div class="col-md-12 mb-3 review-card">
+				<div class="card h-100">
+					<div class="card-body">
+						<h5 class="card-title">
+							@review.UserName
+							@if (can_delete)
+							{
+								<button class="btn btn-outline-danger py-0 px-2" id="delete-review-btn" data-review-id="@review.Id">
+									<i class="bi bi-trash" style="font-size: 1.2rem;"></i>
+								</button>
+							}
+						</h5>
+
+						<div class="mb-2">
+							@for (int i = 1; i <= 5; i++)
+							{
+								<i class="bi @(i <= review.Grade ? "bi-star-fill text-warning" : "bi-star")"></i>
+							}
+							<span class="ms-2 small text-muted">(@review.Grade)</span>
+						</div>
+
+						<p class="card-text">@review.Text</p>
+					</div>
+					<div class="card-footer text-muted">
+						Дата: @review.CreateAt.ToString("dd.MM.yyyy H:mm")
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+
+	@if (!Model.Any())
+	{
+		<div class="alert alert-warning">
+			Пока нет отзывов. Будьте первым!
+		</div>
+	}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+	$(document).ready(function() {
+		$(document).on('click', '#delete-review-btn', function() {
+			const reviewId = $(this).data('review-id');
+			const reviewCard = $(this).closest('.review-card');
+
+			console.log(reviewId);
+
+			if (confirm('Вы уверены, что хотите удалить этот отзыв?')) {
+				$.ajax({
+					url: '/Review/Delete',
+					type: 'POST',
+					data: { reviewId: reviewId },
+					success: function(response) {
+						if (response.success) {
+							reviewCard.html(`
+								<div class="card h-100">
+									<div class="card-body text-center text-muted">
+										<p>Комментарий удалён</p>
+									</div>
+								</div>
+							`);
+
+							reviewCard.css('opacity', '0.6');
+						} else {
+							alert('Ошибка при удалении: ' + response.message);
+						}
+					},
+					error: function(xhr) {
+						alert('Произошла ошибка при удалении отзыва');
+						console.error(xhr.responseText);
+					}
+				});
+			}
+		});
+	});
+</script>

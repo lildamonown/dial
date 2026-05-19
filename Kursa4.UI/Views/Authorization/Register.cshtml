@@ -1,0 +1,69 @@
+﻿@model Kursa4.UI.Models.Inputs.UserRegister;
+
+@{
+    ViewData["Title"] = "Регистрация";
+}
+
+<div class="form-register w-50 m-auto">
+    <form method="post" asp-controller="Authorization" asp-action="Register" class="p-4 border rounded">
+        <div asp-validation-summary="ModelOnly"></div>
+        <h1 class="h3 mb-3 fw-normal text-center">Регистрация</h1>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Email" type="email" class="form-control" id="email" placeholder="name@example.com">
+            <label asp-for="Email" for="email">Логин</label>
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="FirstName" type="text" class="form-control" id="firstName" placeholder="Иван">
+                    <label asp-for="FirstName" for="firstName">Имя</label>
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="Surname" type="text" class="form-control" id="surname" placeholder="Иванов">
+                    <label asp-for="Surname" for="surname">Фамилия</label>
+                    <span asp-validation-for="Surname" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="PhoneNumber" type="tel" class="form-control" id="phoneNumber" placeholder="+79991234567">
+            <label asp-for="PhoneNumber" for="phoneNumber">Номер телефона</label>
+            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3 position-relative">
+                    <input asp-for="Password" type="password" class="form-control pe-5" id="password" placeholder="Пароль">
+                    <label asp-for="Password" for="password">Пароль</label>
+                    <button type="button"
+                            class="btn btn-outline-secondary position-absolute end-0 top-0 h-80 border-0 output-password"
+                            onmousedown="showPassword('password', this)"
+                            onmouseup="hidePassword('password', this)"
+                            onmouseleave="hidePassword('password', this)"
+                            ontouchstart="showPassword('password', this)"
+                            ontouchend="hidePassword('password', this)">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="PasswordConfirm" type="password" class="form-control" id="confirmPassword" placeholder="Повторите пароль">
+                    <label asp-for="PasswordConfirm" for="confirmPassword">Повторите пароль</label>
+                    <span asp-validation-for="PasswordConfirm" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <button class="w-100 btn btn-lg btn-primary" type="submit">Зарегистрироваться</button>
+    </form>
+</div>

@@ -1,0 +1,150 @@
+﻿@model List<ServiceModel>
+
+@{
+	ViewData["Title"] = "Услуги";
+	var can_update = User.IsInRole("Admin") || User.IsInRole("Economist") || User.IsInRole("Owner");
+}
+
+<div class="container w-75 mt-4">
+	<h1 class="mb-4">Наши услуги</h1>
+
+	@if (can_update)
+	{
+		<div class="alert alert-warning mb-4">
+			<i class="bi bi-exclamation-triangle-fill"></i> Вы видите все услуги, включая скрытые, а также можете добавлять услуги/подуслуги
+		</div>
+
+		<a class="btn btn-sm btn-outline-primary mb-2"
+			href="@Url.Action("Create", "Service")">
+			<i class="bi bi-plus-square"></i> Добавить услугу
+		</a>
+
+		<a class="btn btn-sm btn-outline-primary mb-2"
+			href="@Url.Action("Create", "Subservice")">
+			<i class="bi bi-plus-square"></i> Добавить подуслугу
+		</a>
+	}
+
+	<div class="accordion" id="servicesAccordion">
+		@foreach (var service in Model)
+		{
+			if (service.Visible || can_update)
+			{
+				<div class="accordion-item">
+					<h2 class="accordion-header position-relative" id="heading-@service.Id">
+						<button class="accordion-button collapsed @(service.Visible ? "" : "text-danger")"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target="#collapse-@service.Id"
+						aria-controls="collapse-@service.Id">
+							@service.Name
+							@if (!service.Visible)
+							{
+								<span class="badge bg-danger ms-2">Скрыто</span>
+							}
+						</button>
+
+						@if (can_update)
+						{
+							<a class="position-absolute end-0 me-5 btn btn-sm btn-outline-primary"
+							href="@Url.Action("Edit", "Service", new { serviceId = service.Id })"
+							style="top: 50%; transform: translateY(-50%); z-index: 99;">
+								<i class="bi bi-pencil"></i> Изменить
+							</a>
+						}
+					</h2>
+
+					<div id="collapse-@service.Id"
+					class="accordion-collapse collapse"
+					aria-labelledby="heading-@service.Id">
+						<div class="accordion-body">
+							<div class="list-group">
+									@foreach (var subservice in service.Subservices)
+									{
+										if (subservice.Visible || can_update)
+										{
+											<div class="list-group-item service-card mb-3 p-4 border rounded-3 shadow-sm">
+												<div class="d-flex justify-content-between align-items-start mb-2">
+													<h4 class="service-title @(subservice.Visible ? "text-success" : "text-danger") mb-0">
+														@subservice.Name
+														@if (!subservice.Visible)
+														{
+															<span class="badge bg-danger ms-2">Скрыто</span>
+														}
+													</h4>
+
+													@if (can_update)
+													{
+														<a class="btn btn-sm btn-outline-primary"
+														href="@Url.Action("Edit", "Subservice", new { subserviceId = subservice.Id })">
+															<i class="bi bi-pencil"></i> Изменить
+														</a>
+													}
+												</div>
+
+												<p class="service-description mb-1 text-muted">@subservice.Description</p>
+
+												<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+													<div class="service-info flex-grow-1">
+														<div class="d-flex align-items-center gap-2">
+															<i class="bi bi-clock-history text-secondary fs-5"></i>
+															<span class="lead-time-badge fs-5">
+																Примерное время: <strong>@subservice.LeadTime.Days д. @subservice.LeadTime.Hours ч. @subservice.LeadTime.Minutes м.</strong>
+															</span>
+														</div>
+													</div>
+
+													<div class="price-section text-center p-3 bg-light rounded-3 border">
+														<div class="price-amount fs-4 fw-bold text-success mb-1">
+															@subservice.Price.ToString("N2") BYN
+														</div>
+														<div class="price-type-badge small @(subservice.FixPrice ? "bg-success" : "bg-warning") bg-opacity-10 text-@(subservice.FixPrice ? "success" : "warning") p-1 rounded">
+															@(subservice.FixPrice ? "Фиксированная цена" : "Цена не фиксирована")
+														</div>
+													</div>
+												</div>
+											</div>
+										}
+									}
+								@if (!service.Subservices.Any())
+								{
+									<div class="alert alert-warning mt-3">
+										<i class="bi bi-exclamation-triangle-fill"></i> Пока пусто
+									</div>
+								}
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+		}
+	</div>
+</div>
+
+<style>
+	/* Отключаем анимацию аккордеона */
+	.accordion-collapse {
+		transition: none !important;
+	}
+</style>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const accordionItems = document.querySelectorAll('.accordion-item');
+
+		accordionItems.forEach(item => {
+			const button = item.querySelector('.accordion-button');
+			const collapse = item.querySelector('.accordion-collapse');
+
+			collapse.addEventListener('shown.bs.collapse', function() {
+				const itemPosition = item.getBoundingClientRect().top;
+				const offsetPosition = itemPosition + window.pageYOffset;
+
+				window.scrollTo({
+					top: offsetPosition,
+					behavior: 'smooth'
+				});
+			});
+		});
+	});
+</script> 

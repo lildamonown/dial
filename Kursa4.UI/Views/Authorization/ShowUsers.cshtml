@@ -1,0 +1,182 @@
+﻿@model List<UserForDisplay>
+
+@{
+	ViewData["Title"] = "Список пользователей";
+}
+
+<div class="container mt-4">
+	<h2 class="mb-4">Список пользователей</h2>
+
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead class="table-dark">
+				<tr>
+					<th scope="col">Id</th>
+					<th scope="col" onclick="sortTable(1)" style="cursor: pointer;">
+						Имя
+						<i class="bi bi-arrow-down-up sort-icon"></i>
+					</th>
+					<th scope="col" onclick="sortTable(2)" style="cursor: pointer;">
+						Фамилия
+						<i class="bi bi-arrow-down-up sort-icon"></i>
+					</th>
+					<th scope="col" onclick="sortTable(3)" style="cursor: pointer;">
+						Email
+						<i class="bi bi-arrow-down-up sort-icon"></i>
+					</th>
+					<th scope="col" onclick="sortTable(4)" style="cursor: pointer;">
+						Телефон
+						<i class="bi bi-arrow-down-up sort-icon"></i>
+					</th>
+					<th scope="col" onclick="sortTable(5)" style="cursor: pointer;">
+						Роль
+						<i class="bi bi-arrow-down-up sort-icon"></i>
+					</th>
+				</tr>
+			</thead>
+			<tbody id="userTableBody">
+				@foreach (var user in Model)
+				{
+					<tr>
+						<td>@user.Id</td>
+						<td>@user.Name</td>
+						<td>@user.Surname</td>
+						<td><a class="link-primary">@user.Email</a></td>
+						<td>@user.PhoneNumber</td>
+						<td>
+							<a href="#" data-bs-toggle="modal" class="link-underline-none" data-bs-target="#editRoleModal"
+							   data-user-id="@user.Id" data-user-name="@user.Name"
+							   data-user-surname="@user.Surname" data-user-role="@user.Role">
+								<i class="bi bi-pencil-square"></i>
+							</a>
+							@user.Role
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- Модальное окно для изменения роли -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="editRoleModalLabel">Изменение роли пользователя</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<p>Пользователь: <span id="userFullName"></span></p>
+				<form id="roleForm">
+					<input type="hidden" id="userId" name="userId" />
+					<div class="mb-3">
+						<label for="roleSelect" class="form-label">Роль:</label>
+						<select class="form-select" id="roleSelect" name="role">
+							<!-- Варианты ролей будут заполнены через JavaScript -->
+						</select>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+				<button type="button" class="btn btn-primary" id="saveRoleBtn">Изменить</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+	$(document).ready(function() {
+		$(document).on('show.bs.modal', '#editRoleModal', function(event) {
+			var button = $(event.relatedTarget);
+
+			var userId = button.data('user-id');
+			var userName = button.data('user-name');
+			var userSurname = button.data('user-surname');
+			var userRole = button.data('user-role');
+
+			console.log("User data:", userId, userName, userSurname, userRole);
+
+			var modal = $(this);
+			modal.find('#userFullName').text(userName + ' ' + userSurname);
+			modal.find('#userId').val(userId);
+
+			var roleSelect = modal.find('#roleSelect');
+			roleSelect.empty();
+
+			var roles = ['Client', 'Admin', 'Master', 'Economist'];
+
+			roles.forEach(function(role) {
+				var option = new Option(role, role);
+				if (role === userRole) {
+					option.selected = true;
+				}
+				roleSelect.append(option);
+			});
+		});
+	});
+
+	// Обработчик сохранения роли
+	$('#saveRoleBtn').on('click', function() {
+		var userId = $('#userId').val();
+		var newRole = $('#roleSelect').val();
+
+		// Отправка данных на сервер
+		$.ajax({
+			url: '/Authorization/UpdateRole',
+			type: 'POST',
+			data: {
+				userId: userId,
+				newRole: newRole
+			},
+			success: function(response) {
+				if (response.success) {
+					location.reload();
+				} else {
+					alert('Ошибка при обновлении роли: ' + response.message);
+				}
+			},
+			error: function() {
+				alert('Произошла ошибка при отправке данных');
+			}
+		});
+
+		$('#editRoleModal').modal('hide');
+	});
+</script>
+
+<script>
+	let sortDirections = Array(6).fill(true);
+
+	function sortTable(columnIndex) {
+		const tableBody = document.getElementById('userTableBody');
+		const rows = Array.from(tableBody.getElementsByTagName('tr'));
+
+		const sampleValue = rows[0].getElementsByTagName('td')[columnIndex].textContent;
+		const isNumeric = !isNaN(parseFloat(sampleValue)) && isFinite(sampleValue);
+
+		rows.sort((a, b) => {
+			const aValue = a.getElementsByTagName('td')[columnIndex].textContent.trim();
+			const bValue = b.getElementsByTagName('td')[columnIndex].textContent.trim();
+
+			if (isNumeric) {
+				return sortDirections[columnIndex]
+					? parseFloat(aValue) - parseFloat(bValue)
+					: parseFloat(bValue) - parseFloat(aValue);
+			} else {
+				return sortDirections[columnIndex]
+					? aValue.localeCompare(bValue)
+					: bValue.localeCompare(aValue);
+			}
+		});
+
+		sortDirections[columnIndex] = !sortDirections[columnIndex];
+
+		tableBody.innerHTML = '';
+		rows.forEach(row => tableBody.appendChild(row));
+
+		updateSortIcons(columnIndex);
+	}
+</script>

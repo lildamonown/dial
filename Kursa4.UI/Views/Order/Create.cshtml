@@ -1,0 +1,327 @@
+﻿@model OrderForCreate
+
+@{
+	ViewData["Title"] = "Создание заказа";
+}
+
+<div class="container mt-4">
+	<h2>@ViewData["Title"]</h2>
+	<hr />
+
+	<form asp-action="Create" method="post" class="needs-validation" novalidate>
+		<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+		<input type="hidden" asp-for="UserId" />
+
+		<div class="row">
+			<div class="col-md-6">
+				<div class="card">
+					<div class="card-header">
+						<h5 class="card-title">Выбор подуслуг*</h5>
+					</div>
+					<div class="card-body">
+						<div id="subservices-container" class="mb-3">
+							<!-- Сюда будут добавляться выбранные подуслуги -->
+						</div>
+						<button type="button" class="btn btn-primary" id="add-subservice">
+							Добавить подуслугу
+						</button>
+						<span asp-validation-for="Subservices" class="text-danger d-block mt-2"></span>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="mb-3">
+					<label asp-for="VisitDate" class="form-label"></label>
+					<input asp-for="VisitDate" type="datetime-local"
+						   class="form-control" min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+					<span asp-validation-for="VisitDate" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">Автомобиль</label>
+					<button type="button" class="btn btn-primary w-100"
+							data-bs-toggle="modal" data-bs-target="#carModal">
+						Добавить автомобиль
+					</button>
+					<div id="car-info" class="mt-2">
+						<!-- Сюда будет добавлена машина -->
+					</div>
+					<div>
+						<input id="c-mark" asp-for="@Model.Car.Mark" type="hidden" />
+						<input id="c-year" asp-for="@Model.Car.Year" type="hidden" />
+						<input id="c-typeengine" asp-for="@Model.Car.TypeEngine" type="hidden" />
+						<input id="c-drive" asp-for="@Model.Car.Drive" type="hidden" />
+						<input id="c-typebody" asp-for="@Model.Car.TypeBody" type="hidden" />
+						<input id="c-numcar" asp-for="@Model.Car.NumCar" type="hidden" />
+					</div>
+					<span asp-validation-for="Car" class="text-danger"></span>
+				</div>
+			</div>
+		</div>
+
+		<div class="mt-3">
+			<button type="submit" class="btn btn-success">Создать заказ</button>
+			<a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Отмена</a>
+		</div>
+	</form>
+</div>
+
+<!-- Модальное окно для добавления автомобиля -->
+<div class="modal fade" id="carModal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Добавить автомобиль</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body">
+				<form id="carForm">
+					<div class="mb-3">
+						<label class="form-label">Марка</label>
+						<select id="carBrandSelect" class="form-control">
+							<option value="">Выберите марку</option>
+							@if (ViewBag.CarBrands != null)
+							{
+								foreach (var brand in ViewBag.CarBrands)
+								{
+									<option value="@brand.Value">@brand.Text</option>
+								}
+							}
+						</select>
+						<span asp-validation-for="Car.Mark" class="text-danger"></span>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Серия</label>
+						<select id="carSeriesSelect" class="form-control" disabled>
+							<option value="">Сначала выберите марку</option>
+						</select>
+					</div>
+
+					<div class="mb-3">
+						<label asp-for="Car.Year" class="form-label"></label>
+						<input asp-for="Car.Year" class="form-control" />
+						<span asp-validation-for="Car.Year" class="text-danger"></span>
+					</div>
+
+					<div class="mb-3">
+						<label asp-for="Car.TypeEngine" class="form-label"></label>
+						<input asp-for="Car.TypeEngine" class="form-control" />
+						<span asp-validation-for="Car.TypeEngine" class="text-danger"></span>
+					</div>
+
+					<div class="mb-3">
+						<label asp-for="Car.Drive" class="form-label"></label>
+						<input asp-for="Car.Drive" class="form-control" />
+						<span asp-validation-for="Car.Drive" class="text-danger"></span>
+					</div>
+
+					<div class="mb-3">
+						<label asp-for="Car.TypeBody" class="form-label"></label>
+						<input asp-for="Car.TypeBody" class="form-control" />
+						<span asp-validation-for="Car.TypeBody" class="text-danger"></span>
+					</div>
+
+					<div class="mb-3">
+						<label asp-for="Car.NumCar" class="form-label"></label>
+						<input asp-for="Car.NumCar" class="form-control" />
+						<span asp-validation-for="Car.NumCar" class="text-danger"></span>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+				<button type="button" class="btn btn-primary" id="saveCar">Сохранить</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+	$(document).ready(function() {
+		// Модальное окно для выбора подуслуг
+		$('#add-subservice').click(function() {
+			$.get('/Subservice/GetAll', function(data) {
+				if (data.success) {
+					let modalHtml = `
+						<div class="modal fade" id="subserviceModal" tabindex="-1">
+							<div class="modal-dialog modal-lg">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title">Выберите подуслуги</h5>
+										<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+									</div>
+									<div class="modal-body">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Выбрать</th>
+													<th>Название</th>
+													<th>Цена</th>
+												</tr>
+											</thead>
+											<tbody>`;
+
+					data.subservices.forEach(sub => {
+						modalHtml += `
+							<tr>
+								<td><input type="checkbox" class="subservice-check"
+										data-id="${sub.id}"
+										data-name="${sub.name}"
+										data-price="${sub.price.toString().replace(',', '.')}"
+										data-leadtime="${sub.leadTime}" /></td>
+								<td>${sub.name}</td>
+								<td>${sub.price.toLocaleString('ru-RU', {minimumFractionDigits: 2})} BYN</td>
+							</tr>`;
+					});
+
+					modalHtml += `
+											</tbody>
+										</table>
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-primary"
+											id="confirm-subservices">Добавить</button>
+										<button type="button" class="btn btn-secondary"
+											data-bs-dismiss="modal">Отмена</button>
+									</div>
+								</div>
+							</div>
+						</div>`;
+
+					$('body').append(modalHtml);
+					var modal = new bootstrap.Modal(document.getElementById('subserviceModal'));
+					modal.show();
+
+					$('#confirm-subservices').click(function() {
+						$('.subservice-check:checked').each(function() {
+							const priceStr = $(this).attr('data-price');
+							const sub = {
+								id: $(this).data('id'),
+								name: $(this).data('name'),
+								price: parseFloat(priceStr.replace(',', '.')),
+								leadTime: $(this).data('leadtime')
+							};
+							addSubserviceToForm(sub);
+						});
+						modal.hide();
+					});
+
+					$('#subserviceModal').on('hidden.bs.modal', function () {
+						$(this).remove();
+					});
+				}
+			});
+		});
+
+		function addSubserviceToForm(subservice) {
+			const container = $('#subservices-container');
+			const index = container.children().length;
+
+			const html = `
+				<div class="card mb-2 subservice-item" data-id="${subservice.id}">
+					<div class="card-body py-2">
+						<div class="d-flex justify-content-between align-items-center">
+							<div>
+								<h6 class="mb-0">${subservice.name}</h6>
+								<small class="text-muted">${subservice.price.toFixed(2)} BYN</small>
+							</div>
+							<button type="button" class="btn btn-sm btn-danger remove-subservice">
+								<i class="bi bi-trash"></i>
+							</button>
+						</div>
+						<input type="hidden" name="Subservices[${index}].Id" value="${subservice.id}" />
+						<input type="hidden" name="Subservices[${index}].Name" value="${subservice.name}" />
+						<input type="hidden" name="Subservices[${index}].Price" value="${subservice.price.toString().replace('.', ',')}" />
+					</div>
+				</div>`;
+
+			container.append(html);
+
+			// Обновляем валидацию
+			const form = container.closest('form');
+			form.removeClass('was-validated');
+			form.addClass('was-validated');
+		}
+
+		$(document).on('click', '.remove-subservice', function() {
+			$(this).closest('.subservice-item').remove();
+			reindexSubservices();
+		});
+
+		function reindexSubservices() {
+			$('#subservices-container .subservice-item').each(function(index) {
+				$(this).find('input').each(function() {
+					const name = $(this).attr('name').replace(/\[\d+\]/, `[${index}]`);
+					$(this).attr('name', name);
+				});
+			});
+		}
+	});
+</script>
+
+<script>
+	$(document).ready(function() {
+		$('#carBrandSelect').change(function() {
+			var brandId = $(this).val();
+			var brandName = $(this).find('option:selected').text();
+			if (brandId) {
+				$.getJSON('/Order/GetSeriesByBrand', { brandId: brandId }, function(data) {
+					if (data.success) {
+						var select = $('#carSeriesSelect');
+						select.empty().prop('disabled', false);
+						select.append($('<option>', { value: '', text: 'Выберите серию' }));
+						$.each(data.series, function(i, s) {
+							select.append($('<option>', { value: s.name, text: s.name }));
+						});
+					}
+				});
+			} else {
+				$('#carSeriesSelect').empty().prop('disabled', true)
+					.append($('<option>', { value: '', text: 'Сначала выберите марку' }));
+			}
+		});
+
+		$('#saveCar').click(function() {
+			updateCarInfo();
+			$('#carModal').modal('hide');
+		});
+
+		function updateCarInfo() {
+			var brandName = $('#carBrandSelect').find('option:selected').text();
+			var seriesName = $('#carSeriesSelect').val();
+			var fullMark = brandName + (seriesName ? ' ' + seriesName : '');
+
+			const car = {
+				Mark: fullMark,
+				Year: $('#Car_Year').val(),
+				TypeEngine: $('#Car_TypeEngine').val(),
+				Drive: $('#Car_Drive').val(),
+				TypeBody: $('#Car_TypeBody').val(),
+				NumCar: $('#Car_NumCar').val()
+			};
+
+			$("#c-mark").val(car.Mark);
+			$("#c-year").val(car.Year);
+			$("#c-typeengine").val(car.TypeEngine);
+			$("#c-drive").val(car.Drive);
+			$("#c-typebody").val(car.TypeBody);
+			$("#c-numcar").val(car.NumCar);
+
+			const carHtml = `
+				<div class="card">
+					<div class="card-body">
+						<h6>${car.Mark} (${car.Year})</h6>
+						<p class="mb-1">${car.TypeBody}, ${car.TypeEngine}</p>
+						<p class="mb-1">${car.Drive}</p>
+						<p class="mb-0">${car.NumCar}</p>
+					</div>
+				</div>`;
+
+			$('#car-info').html(carHtml);
+		}
+	});
+</script>

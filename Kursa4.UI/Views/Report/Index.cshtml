@@ -1,0 +1,126 @@
+﻿@model List<ReportModel>
+
+@{
+	ViewData["Title"] = "Отчеты";
+}
+
+<div class="container mt-4">
+	<h2>@ViewData["Title"]</h2>
+
+	<table class="table table-striped table-hover">
+		<thead class="table-dark">
+			<tr>
+				<th>Id</th>
+				<th>Заказ</th>
+				<th>Финальная цена</th>
+				<th>Дата завершения</th>
+				<th>Мастер</th>
+			</tr>
+		</thead>
+		<tbody class="text-center">
+			@foreach (var item in Model)
+			{
+				<tr>
+					<td>@item.Id</td>
+					<td>
+						<div class="mb-3">
+							<div class="input-group">
+								<button type="button" data-order-id="@item.OrderId" class="btn btn-primary orderInfoBtn"
+									data-bs-toggle="modal" data-bs-target="#orderModal">
+									<i class="bi bi-info-circle"></i> Инфо о заказе
+								</button>
+							</div>
+						</div>
+					</td>
+					<td>@item.FinitePrice</td>
+					<td>@item.DateCompleted</td>
+					<td>@item.NameMaster @item.SurnameMaster</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="orderModalLabel">Информация о заказе #<span id="modalOrderId"></span></h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="orderDetailsContent">
+				<div class="text-center">
+					<div class="spinner-border text-primary" role="status">
+						<span class="visually-hidden">Загрузка...</span>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+	$(document).ready(function() {
+		$('.orderInfoBtn').click(function() {
+			const orderId = $(this).data('order-id');
+
+			$('#modalOrderId').text(orderId);
+			console.log(orderId)
+
+			$.get('/Order/GetById', { orderId: orderId })
+				.done(function(response) {
+					if (response.success) {
+						const order = response.order;
+						$('#orderDetailsContent').html(`
+							<div class="row mb-3">
+								<div class="col-md-6">
+									<p><strong>Клиент:</strong> ${order.userName} ${order.userSurname}</p>
+									<p class="text-dark"><strong>Телефон:</strong> ${order.userPhoneNumber}</p>
+								</div>
+								<div class="col-md-6">
+									<p><strong>Дата создания:</strong> ${new Date(order.createAt).toLocaleString()}</p>
+									<p><strong>Предварительная цена:</strong> ${order.sumPrice.toFixed(2)}</p>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-12">
+									<h6>Подуслуги:</h6>
+									<ul class="list-group">
+										${order.nameSubservice.map(sub => `<li class="list-group-item">${sub}</li>`).join('')}
+									</ul>
+								</div>
+							</div>
+						`);
+					} else {
+						$('#orderDetailsContent').html(`
+							<div class="alert alert-danger">
+								${response.message || 'Произошла ошибка при получении данных о заказе'}
+							</div>
+						`);
+					}
+				})
+				.fail(function() {
+					$('#orderDetailsContent').html(`
+						<div class="alert alert-danger">
+							Ошибка соединения с сервером
+						</div>
+					`);
+				});
+		});
+
+		// Очищаем модальное окно при закрытии
+		$('#orderModal').on('hidden.bs.modal', function () {
+			$('#orderDetailsContent').html(`
+				<div class="text-center">
+					<div class="spinner-border text-primary" role="status">
+						<span class="visually-hidden">Загрузка...</span>
+					</div>
+				</div>
+			`);
+		});
+	});
+</script>

@@ -1,0 +1,258 @@
+﻿@model List<OrderModel>
+
+<style>
+    .table th {
+    white-space: nowrap;
+    }
+
+    .badge {
+    font-size: 0.9em;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4">@ViewData["Title"]</h2>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">Нет доступных заказов</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Имя</th>
+                        <th scope="col">Фамилия</th>
+                        <th scope="col">Телефон</th>
+                        <th scope="col">Статус</th>
+                        <th scope="col">Дата визита</th>
+                        <th scope="col">Авто</th>
+                        <th scope="col">Подуслуги</th>
+                        <th scope="col">Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <th scope="row">
+                                <a href="@Url.Action("Edit", "Order", new { orderId = order.Id })" class="link-underline-none">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                @order.Id
+                            </th>
+                            <td>@order.UserName</td>
+                            <td>@order.UserSurname</td>
+                            <td>
+                                <a class="text-decoration-none">
+                                    @order.UserPhoneNumber
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge text-black">
+                                    @order.StatusName
+                                </span>
+                            
+                                @if(order.VisitDate == null)
+                                {
+                                    <td class="text-danger">Дата не выбрана</td>
+                                }
+                                else
+                                {
+								    <td>@order.VisitDate?.ToString("dd.MM.yyyy HH:mm")</td>
+                                }
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary car-details-btn"
+                                        data-car-id="@order.CarId"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#carModal">
+                                    Показать авто
+                                </button>
+                            </td>
+                            <td>
+                                @if (order.NameSubservice != null && order.NameSubservice.Any())
+                                {
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var subservice in order.NameSubservice)
+                                        {
+                                            <li>
+                                                <i class="bi bi-chevron-compact-right"></i>
+                                                @subservice
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Нет подуслуг</span>
+                                }
+                            </td>
+                            <td class="fw-bold">@order.SumPrice.ToString("N2") BYN</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="carModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Информация об автомобиле</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="carModalBody">
+                <!-- Сюда будет загружаться контент -->
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.car-details-btn').click(function() {
+            const carId = $(this).data('car-id');
+            const modal = $('#carModal');
+            const modalBody = $('#carModalBody');
+
+            modalBody.html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Загрузка данных об автомобиле...</p>
+                </div>
+            `);
+
+            $.ajax({
+                url: '/Car/GetById',
+                type: 'GET',
+                dataType: 'json',
+                data: { carId: carId },
+                beforeSend: function() {
+                    console.log('Запрос отправлен');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const car = response.car;
+                        modalBody.html(`
+                                <div class="car-details">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <i class="fas fa-car-side text-primary me-3" style="font-size: 2rem;"></i>
+                                        <div>
+                                            <h4 class="mb-0">${car.mark} ${car.year}</h4>
+                                            <div class="text-muted small">ID: ${car.id}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card h-100 border-0 shadow-sm">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-primary mb-3">
+                                                        <i class="fas fa-info-circle me-2"></i>Технические характеристики
+                                                    </h6>
+
+                                                    <div class="spec-item d-flex align-items-center mb-3">
+                                                        <div class="spec-icon bg-light-primary rounded-circle p-2 me-3">
+                                                            <i class="fas fa-gas-pump text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-muted small">Тип двигателя</div>
+                                                            <div class="fw-bold">${car.typeEngine}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="spec-item d-flex align-items-center mb-3">
+                                                        <div class="spec-icon bg-light-primary rounded-circle p-2 me-3">
+                                                            <i class="fas fa-car text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-muted small">Тип кузова</div>
+                                                            <div class="fw-bold">${car.typeBody}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="card h-100 border-0 shadow-sm">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-primary mb-3">
+                                                        <i class="fas fa-cogs me-2"></i>Дополнительная информация
+                                                    </h6>
+
+                                                    <div class="spec-item d-flex align-items-center mb-3">
+                                                        <div class="spec-icon bg-light-primary rounded-circle p-2 me-3">
+                                                            <i class="fas fa-tachometer-alt text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-muted small">Привод</div>
+                                                            <div class="fw-bold">${car.drive}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="spec-item d-flex align-items-center">
+                                                        <div class="spec-icon bg-light-primary rounded-circle p-2 me-3">
+                                                            <i class="fas fa-id-card-alt text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-muted small">Гос. номер</div>
+                                                            <div class="fw-bold badge bg-primary bg-opacity-10 text-primary fs-6">
+                                                                ${car.numCar}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        `);
+                    } else {
+                        modalBody.html(`
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                ${response.message || 'Произошла ошибка при загрузке данных'}
+                            </div>
+                        `);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Ошибка при загрузке данных';
+                    if (xhr.status === 404) {
+                        errorMessage = 'Автомобиль не найден';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Требуется авторизация';
+                    }
+
+                    modalBody.html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${errorMessage}
+                            ${xhr.status ? ` (Код: ${xhr.status})` : ''}
+                        </div>
+                    `);
+                },
+                complete: function() {
+                    console.log('Запрос завершен');
+                }
+            });
+        });
+    });
+</script>

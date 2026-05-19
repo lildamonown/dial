@@ -1,0 +1,150 @@
+﻿@{
+    ViewData["Title"] = "Главная страница";
+}
+
+<div class="hero-block mb-5 w-100">
+    <div class="hero-background">
+        <img src="/MyImg/4259852_91290.jpg" class="fade-in" alt="Фоновое изображение">
+    </div>
+
+    <div class="hero-content w-50">
+        <h1 class="display-4">СТО</h1>
+
+        <div class="precision-rating mb-2">
+            @{
+                double averageGrade = ViewBag.AverGrade ?? 0;
+                for (int i = 1; i <= 5; i++)
+                {
+                    double starFill = Math.Clamp(averageGrade - (i - 1), 0, 1);
+                    string fillPercentage = (starFill * 100).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+                    <div class="star-container" title="@(fillPercentage)%">
+                        <i class="bi bi-star empty-star"></i>
+                        <i class="bi bi-star-fill filled-star" style="--fill-percentage: @(fillPercentage)%;"></i>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="rating-info">
+            <p class="rating-item mb-1">
+                <span class="fw-bold">Рейтинг:</span>
+                <span class="badge bg-primary rounded-pill ms-2">@Math.Round(ViewBag.AverGrade, 2)</span>
+            </p>
+            <p class="rating-item mb-1">
+                <span class="fw-bold"><a class="link-light" asp-controller="Review" asp-action="Index">Отзывы</a>:</span>
+                <span class="badge bg-success rounded-pill ms-2">@ViewBag.CoutReviews</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="contact-card h-100 p-4 bg-white rounded-3 shadow-sm d-flex">
+                <div class="me-4">
+                    <i class="bi bi-geo-alt-fill contact-icon"></i>
+                </div>
+                <div>
+                    <h3 class="h5 mb-3">Адрес</h3>
+                    <p class="mb-0">г. Гомель, пр. Октября, 48а</p>
+                    <small class="text-muted">Рядом с Довыдовским рынком</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="contact-card h-100 p-4 bg-white rounded-3 shadow-sm d-flex">
+                <div class="me-4">
+                    <i class="bi bi-telephone-fill contact-icon"></i>
+                </div>
+                <div>
+                    <h3 class="h5 mb-3">Звоните нам</h3>
+                    <ul class="list-unstyled mb-0">
+                        <li><a class="text-decoration-none">+375 (29) 123-45-67</a></li>
+                        <li><a class="text-decoration-none">+375 (33) 123-45-67</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="contact-card h-100 p-4 bg-white rounded-3 shadow-sm d-flex">
+                <div class="me-4">
+                    <i class="bi bi-clock-fill contact-icon"></i>
+                </div>
+                <div>
+                    <h3 class="h5 mb-3">Часы работы</h3>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between">
+                            <span>Пн - Пт:</span>
+                            <strong>8:00 - 20:00</strong>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span>Суббота:</span>
+                            <strong>9:00 - 18:00</strong>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span class="me-4">Воскресенье:</span>
+                            <strong>выходной</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="contact-card h-100 p-4 bg-white rounded-3 shadow-sm d-flex">
+                <div class="me-4">
+                    <i class="bi bi-envelope-fill contact-icon"></i>
+                </div>
+                <div>
+                    <h3 class="h5 mb-3">Электронная почта</h3>
+                    <p class="mb-2"><a class="text-decoration-none">info@sto-gomel.by</a></p>
+                    <p class="mb-0"><a class="text-decoration-none">service@sto-gomel.by</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row h-100">
+        <div class="col-lg-6">
+            <div class="p-4 bg-white rounded-3 shadow-sm h-100 ">
+                <h3 class="h4 mb-4">Как нас найти</h3>
+                <ul class="list-unstyled">
+                    <li class="mb-3 d-flex">
+                        <i class="bi bi-bus-front text-primary me-3"></i>
+                        <span>Остановка "Университет": автобусы 17, 20, 26</span>
+                    </li>
+                    <li class="mb-3 d-flex">
+                        <i class="bi bi-p-circle text-primary me-3"></i> 
+                        <span>Парковка для клиентов на 560 мест (бесплатная)</span>
+                    </li>
+                    <li class="d-flex">
+                        <i class="bi bi-info-circle text-primary me-3"></i>
+                        <span>Вход со стороны 2-го корпуса ГГТУ им. П.О.Сухого, вывеска "СТО"</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="map-container rounded-3 overflow-hidden shadow-sm">
+                <iframe frameborder="0"
+                        scrolling="no"
+                        marginheight="0"
+                        marginwidth="0"
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=30.9342%2C52.4033%2C30.9442%2C52.4093&amp;layer=mapnik&amp;marker=52.4063%2C30.9392"
+                        class="map-iframe w-100">
+                </iframe>
+                <small class="text-muted d-block mt-2 text-center">
+                    <a href="https://www.openstreetmap.org/?mlat=52.4063&amp;mlon=30.9392#map=17/52.4063/30.9392" target="_blank" class="text-decoration-none">
+                        <i class="bi bi-box-arrow-up-right"></i> Открыть карту в новом окне
+                    </a>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
