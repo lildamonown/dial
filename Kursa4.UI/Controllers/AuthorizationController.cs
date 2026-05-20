@@ -114,12 +114,24 @@ namespace Kursa4.UI.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Owner")]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers(string search)
         {
             var users = await _userManager.Users.ToListAsync();
 
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                users = users.Where(u =>
+                    (u.Name ?? "").ToLower().Contains(term) ||
+                    (u.Surname ?? "").ToLower().Contains(term) ||
+                    (u.PhoneNumber ?? "").Contains(term)
+                ).ToList();
+            }
+
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            users.Remove(users.Where(u => u.Id == currentUserId).First());
+            var currentUser = users.FirstOrDefault(u => u.Id == currentUserId);
+            if (currentUser != null)
+                users.Remove(currentUser);
 
             var usersForDisplay = _mapper.Map<List<UserForDisplay>>(users);
 
@@ -132,6 +144,8 @@ namespace Kursa4.UI.Controllers
                     user.Role = string.Join(", ", roles);
                 }
             }
+
+            ViewBag.Search = search;
 
             return View("ShowUsers", usersForDisplay);
         }

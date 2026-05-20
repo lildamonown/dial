@@ -38,6 +38,7 @@ namespace Kursa4.DAL.Repositories.Implementation.EF
                 .Include(o => o.User)
                 .Include(o => o.Car)
                 .Include(o => o.Subservices)
+                .OrderByDescending(o => o.CreateAt)
                 .ToListAsync();
         }
 

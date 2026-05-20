@@ -41,10 +41,11 @@
 			<tr>
 				<th style="width: 40px;"></th>
 				<th>№</th>
+				<th>Статус</th>
 				<th>Клиент</th>
 				<th>Авто</th>
 				<th>Подуслуги</th>
-				<th>Сумма</th>
+				<th>Финальная цена</th>
 				<th>Дата завершения</th>
 				<th>Мастер</th>
 			</tr>
@@ -60,6 +61,7 @@
 						</button>
 					</td>
 					<td>@item.OrderId</td>
+					<td>@item.StatusName</td>
 					<td>
 						<strong>@item.ClientName</strong><br />
 						<small class="text-muted">@item.ClientPhone</small>
@@ -80,12 +82,12 @@
 							<span class="text-muted">—</span>
 						}
 					</td>
-					<td class="fw-bold">@item.OrderSumPrice.ToString("N2") BYN</td>
+					<td class="fw-bold">@item.FinitePrice.ToString("N2") BYN</td>
 					<td>@item.DateCompleted.ToString("dd.MM.yyyy HH:mm")</td>
 					<td>@item.NameMaster @item.SurnameMaster</td>
 				</tr>
 				<tr class="order-details-row" style="display:none;" data-order-id="@item.OrderId">
-					<td colspan="8">
+					<td colspan="9">
 						<div class="p-3 bg-light">
 							<div class="text-center">
 								<div class="spinner-border text-primary" role="status">
@@ -124,7 +126,7 @@
 									<p><strong>Клиент:</strong> ${order.userName} ${order.userSurname} <span class="text-muted">${order.userPhoneNumber}</span></p>
 									<p><strong>Дата создания:</strong> ${new Date(order.createAt).toLocaleString()}</p>
 									<p><strong>Статус:</strong> ${order.statusName || ''}</p>
-									<p><strong>Предв. цена:</strong> ${order.sumPrice.toFixed(2)} BYN</p>
+									<p><strong>Финальная цена:</strong> ${order.sumPrice.toFixed(2)} BYN</p>
 									<h6>Подуслуги:</h6>
 									<ul class="list-group">
 										${order.nameSubservice.map(sub => `<li class="list-group-item">${sub}</li>`).join('')}

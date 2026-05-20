@@ -29,6 +29,7 @@ namespace Kursa4.DAL.Repositories.Implementation.EF
             return await _context.Reports
                 .AsNoTracking()
                 .Include(r => r.Order)
+                .OrderByDescending(r => r.DateCompleted)
                 .ToListAsync();
         }
 

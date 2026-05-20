@@ -36,6 +36,9 @@
 							Добавить подуслугу
 						</button>
 						<span asp-validation-for="Subservices" class="text-danger d-block mt-2"></span>
+						<div id="total-price-container" class="mt-2 text-end">
+							<strong>Итоговая цена: <span id="total-price">0.00</span> BYN</strong>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -114,23 +117,50 @@
 						<span asp-validation-for="Car.Year" class="text-danger"></span>
 					</div>
 
-					<div class="mb-3">
-						<label asp-for="Car.TypeEngine" class="form-label"></label>
-						<input asp-for="Car.TypeEngine" class="form-control" />
-						<span asp-validation-for="Car.TypeEngine" class="text-danger"></span>
-					</div>
+				<div class="mb-3">
+					<label asp-for="Car.TypeEngine" class="form-label"></label>
+					<select asp-for="Car.TypeEngine" class="form-control">
+						<option value="">Выберите тип двигателя</option>
+						@if (ViewBag.EngineTypes != null)
+						{
+							foreach (var item in ViewBag.EngineTypes)
+							{
+								<option value="@item.Text">@item.Text</option>
+							}
+						}
+					</select>
+					<span asp-validation-for="Car.TypeEngine" class="text-danger"></span>
+				</div>
 
-					<div class="mb-3">
-						<label asp-for="Car.Drive" class="form-label"></label>
-						<input asp-for="Car.Drive" class="form-control" />
-						<span asp-validation-for="Car.Drive" class="text-danger"></span>
-					</div>
+				<div class="mb-3">
+					<label asp-for="Car.Drive" class="form-label"></label>
+					<select asp-for="Car.Drive" class="form-control">
+						<option value="">Выберите привод</option>
+						@if (ViewBag.Drives != null)
+						{
+							foreach (var item in ViewBag.Drives)
+							{
+								<option value="@item.Text">@item.Text</option>
+							}
+						}
+					</select>
+					<span asp-validation-for="Car.Drive" class="text-danger"></span>
+				</div>
 
-					<div class="mb-3">
-						<label asp-for="Car.TypeBody" class="form-label"></label>
-						<input asp-for="Car.TypeBody" class="form-control" />
-						<span asp-validation-for="Car.TypeBody" class="text-danger"></span>
-					</div>
+				<div class="mb-3">
+					<label asp-for="Car.TypeBody" class="form-label"></label>
+					<select asp-for="Car.TypeBody" class="form-control">
+						<option value="">Выберите тип кузова</option>
+						@if (ViewBag.BodyTypes != null)
+						{
+							foreach (var item in ViewBag.BodyTypes)
+							{
+								<option value="@item.Text">@item.Text</option>
+							}
+						}
+					</select>
+					<span asp-validation-for="Car.TypeBody" class="text-danger"></span>
+				</div>
 
 					<div class="mb-3">
 						<label asp-for="Car.NumCar" class="form-label"></label>
@@ -250,6 +280,17 @@
 			});
 		});
 
+		function updateTotalPrice() {
+			let total = 0;
+			$('#subservices-container .subservice-item').each(function() {
+				const priceText = $(this).find('input[name$=".Price"]').val();
+				if (priceText) {
+					total += parseFloat(priceText.replace(',', '.'));
+				}
+			});
+			$('#total-price').text(total.toFixed(2));
+		}
+
 		function addSubserviceToForm(subservice) {
 			const container = $('#subservices-container');
 			const index = container.children().length;
@@ -273,6 +314,7 @@
 				</div>`;
 
 			container.append(html);
+			updateTotalPrice();
 
 			// Обновляем валидацию
 			const form = container.closest('form');
@@ -283,6 +325,7 @@
 		$(document).on('click', '.remove-subservice', function() {
 			$(this).closest('.subservice-item').remove();
 			reindexSubservices();
+			updateTotalPrice();
 		});
 
 		function reindexSubservices() {

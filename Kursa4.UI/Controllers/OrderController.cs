@@ -67,6 +67,10 @@ namespace Kursa4.UI.Controllers
                 ViewBag.CarBrands = new SelectList(brandsResult.Value, "Id", "Name");
             }
 
+            ViewBag.EngineTypes = new SelectList(CarReferences.EngineTypes);
+            ViewBag.BodyTypes = new SelectList(CarReferences.BodyTypes);
+            ViewBag.Drives = new SelectList(CarReferences.Drives);
+
             return View(order);
         }
 
@@ -84,6 +88,11 @@ namespace Kursa4.UI.Controllers
                 {
                     ViewBag.CarBrands = new SelectList(brandsResult.Value, "Id", "Name");
                 }
+
+                ViewBag.EngineTypes = new SelectList(CarReferences.EngineTypes);
+                ViewBag.BodyTypes = new SelectList(CarReferences.BodyTypes);
+                ViewBag.Drives = new SelectList(CarReferences.Drives);
+
                 return View(order);
             }
 
@@ -200,6 +209,10 @@ namespace Kursa4.UI.Controllers
             mapp.UserSurname = resultUser.Surname;
             mapp.UserPhoneNumber = resultUser.PhoneNumber;
 
+            var statusResult = await _statusService.GetByIdAsync(result.Value.StatusId);
+            if (statusResult.Status == BLL.Models.StatusCode.Ok)
+                mapp.StatusName = statusResult.Value.Name;
+
             return Json(new { success = true, order = mapp });
         }
 
@@ -241,8 +254,25 @@ namespace Kursa4.UI.Controllers
 
             var resultStatus = await _statusService.GetByNameAsync(EStatus.Completed.GetValue());
 
+            if (resultStatus.Status != BLL.Models.StatusCode.Ok)
+            {
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        Controller = "Order/Edit",
+                        Description = resultStatus.Description
+                    });
+            }
+
             if(order.StatusId == resultStatus.Value.Id)
             {
+                if (order.Subservices == null || !order.Subservices.Any())
+                {
+                    ModelState.AddModelError("Subservices", "Добавьте хотя бы одну подуслугу перед завершением заказа");
+                    var resultStatuses = await _statusService.GetAllAsync();
+                    ViewBag.Statuses = new SelectList(_mapper.Map<List<StatusDTO>>(resultStatuses.Value), "Id", "Name");
+                    return View(order);
+                }
                 return RedirectToAction("Create", "Report", new { orderId = order.Id, price = order.Subservices.Sum(s => s.Price) });
             }
 

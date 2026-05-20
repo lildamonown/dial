@@ -13,7 +13,7 @@ using System.Security.Claims;
 
 namespace Kursa4.UI.Controllers
 {
-    [Authorize(Roles = "Admin,Owner,Economist")]
+    [Authorize(Roles = "Admin,Owner,Economist,Master")]
     public class ReportController : Controller
     {
         private readonly IReportService _reportService;
@@ -70,6 +70,10 @@ namespace Kursa4.UI.Controllers
                     report.OrderSubservices = order.Subservices?.Select(s => s.Name).ToList() ?? [];
                     report.OrderSumPrice = order.Subservices?.Sum(s => s.Price) ?? 0;
 
+                    var statusResult = await _statusService.GetByIdAsync(order.StatusId);
+                    if (statusResult.Status == BLL.Models.StatusCode.Ok)
+                        report.StatusName = statusResult.Value.Name;
+
                     var carResult = await _carService.GetByIdAsync(order.CarId);
                     if (carResult.Status == BLL.Models.StatusCode.Ok)
                         report.CarMark = carResult.Value.Mark;
@@ -89,14 +93,34 @@ namespace Kursa4.UI.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(int orderId, double price)
         {
-            var masters = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        Controller = "Report/Create",
+                        Description = "Пользователь не найден"
+                    });
+            }
+
+            var masters = await _userManager.FindByIdAsync(userId);
+            if (masters == null)
+            {
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        Controller = "Report/Create",
+                        Description = "Пользователь не найден"
+                    });
+            }
 
             var report = new ReportForCreate()
             {
                 OrderId = orderId,
                 FinitePrice = price,
-                NameMaster = masters.Name,
-                SurnameMaster = masters.Surname
+                NameMaster = masters.Name ?? "",
+                SurnameMaster = masters.Surname ?? ""
             };
 
             return View(report);
@@ -120,7 +144,17 @@ namespace Kursa4.UI.Controllers
             }
 
             var order = result.Value;
-            order.StatusId = (await _statusService.GetByNameAsync(EStatus.Completed.GetValue())).Value.Id;
+            var completedStatus = await _statusService.GetByNameAsync(EStatus.Completed.GetValue());
+            if (completedStatus.Status != BLL.Models.StatusCode.Ok)
+            {
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        Controller = "Report/Create",
+                        Description = completedStatus.Description
+                    });
+            }
+            order.StatusId = completedStatus.Value.Id;
 
             var resultUpdate = await _orderService.UpdateAsync(order);
 
