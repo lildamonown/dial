@@ -34,8 +34,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./Kursa4.UI/wwwroot:/app/wwwroot
+    # volumes:
+    #   - ./Kursa4.UI/wwwroot:/app/wwwroot
 
 volumes:
   sql_data:
