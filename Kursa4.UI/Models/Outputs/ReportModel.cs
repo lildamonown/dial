@@ -28,5 +28,7 @@ namespace Kursa4.UI.Models.Outputs
         public string CarMark { get; set; } = string.Empty;
         public string ClientName { get; set; } = string.Empty;
         public string ClientPhone { get; set; } = string.Empty;
+
+        public string Comment { get; set; } = string.Empty;
     }
 }

@@ -20,5 +20,7 @@ namespace Kursa4.DAL.Entities
         public string NameMaster { get; set; } = string.Empty;
 
         public string SurnameMaster { get; set; } = string.Empty;
+
+        public string Comment { get; set; } = string.Empty;
     }
 }

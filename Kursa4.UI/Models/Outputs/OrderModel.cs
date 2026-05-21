@@ -33,5 +33,14 @@ namespace Kursa4.UI.Models.Outputs
 
         [Display(Name = "Предварительная цена")]
         public double SumPrice { get; set; }
+
+        [Display(Name = "Финальная цена")]
+        public double? FinitePrice { get; set; }
+
+        [Display(Name = "Комментарий мастера")]
+        public string? ReportComment { get; set; }
+
+        [Display(Name = "Мастер")]
+        public string? MasterName { get; set; }
     }
 }

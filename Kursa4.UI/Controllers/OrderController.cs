@@ -23,6 +23,7 @@ namespace Kursa4.UI.Controllers
         private readonly IStatusService _statusService;
         private readonly ICarBrandService _carBrandService;
         private readonly ICarSeriesService _carSeriesService;
+        private readonly IReportService _reportService;
 
         private readonly UserManager<User> _userManager;
 
@@ -30,7 +31,7 @@ namespace Kursa4.UI.Controllers
 
         public OrderController(IOrderService orderService, IMapper mapper, ICarService carService,
             IStatusService statusService, UserManager<User> userManager, ICarBrandService carBrandService,
-            ICarSeriesService carSeriesService)
+            ICarSeriesService carSeriesService, IReportService reportService)
         {
             _orderService = orderService;
             _mapper = mapper;
@@ -39,6 +40,7 @@ namespace Kursa4.UI.Controllers
             _userManager = userManager;
             _carBrandService = carBrandService;
             _carSeriesService = carSeriesService;
+            _reportService = reportService;
         }
 
         [HttpGet]
@@ -295,6 +297,11 @@ namespace Kursa4.UI.Controllers
         private async Task<List<OrderModel>> Mapp(List<OrderDTO> orders)
         {
             var ordersModel = new List<OrderModel>();
+
+            var reportsResult = await _reportService.GetAllAsync();
+            var reports = reportsResult.Status == BLL.Models.StatusCode.Ok
+                ? reportsResult.Value : [];
+
             foreach (var orderDto in orders)
             {
                 var orderModel = _mapper.Map<OrderModel>(orderDto);
@@ -311,6 +318,14 @@ namespace Kursa4.UI.Controllers
                 if (statusResult.Status == BLL.Models.StatusCode.Ok)
                 {
                     orderModel.StatusName = statusResult.Value.Name;
+                }
+
+                var report = reports.FirstOrDefault(r => r.OrderId == orderDto.Id);
+                if (report != null)
+                {
+                    orderModel.FinitePrice = report.FinitePrice;
+                    orderModel.ReportComment = report.Comment;
+                    orderModel.MasterName = $"{report.NameMaster} {report.SurnameMaster}";
                 }
 
                 ordersModel.Add(orderModel);

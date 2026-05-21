@@ -22,5 +22,10 @@ namespace Kursa4.UI.Models.Inputs
         [Required(ErrorMessage = "Фамилия мастера обязательна")]
         [StringLength(50, MinimumLength = 2, ErrorMessage = "Фамилия должна быть от 2 до 50 символов")]
         public string SurnameMaster { get; set; } = string.Empty;
+
+        [Display(Name = "Комментарий к изменению цены")]
+        [StringLength(500, ErrorMessage = "Комментарий не должен превышать 500 символов")]
+        [DataType(DataType.MultilineText)]
+        public string? Comment { get; set; }
     }
 }

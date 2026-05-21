@@ -48,6 +48,7 @@
 				<th>Финальная цена</th>
 				<th>Дата завершения</th>
 				<th>Мастер</th>
+				<th>Комментарий</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -85,9 +86,19 @@
 					<td class="fw-bold">@item.FinitePrice.ToString("N2") BYN</td>
 					<td>@item.DateCompleted.ToString("dd.MM.yyyy HH:mm")</td>
 					<td>@item.NameMaster @item.SurnameMaster</td>
+					<td>
+						@if (!string.IsNullOrEmpty(item.Comment))
+						{
+							<small>@item.Comment</small>
+						}
+						else
+						{
+							<span class="text-muted fst-italic">—</span>
+						}
+					</td>
 				</tr>
 				<tr class="order-details-row" style="display:none;" data-order-id="@item.OrderId">
-					<td colspan="9">
+					<td colspan="10">
 						<div class="p-3 bg-light">
 							<div class="text-center">
 								<div class="spinner-border text-primary" role="status">
@@ -126,7 +137,7 @@
 									<p><strong>Клиент:</strong> ${order.userName} ${order.userSurname} <span class="text-muted">${order.userPhoneNumber}</span></p>
 									<p><strong>Дата создания:</strong> ${new Date(order.createAt).toLocaleString()}</p>
 									<p><strong>Статус:</strong> ${order.statusName || ''}</p>
-									<p><strong>Финальная цена:</strong> ${order.sumPrice.toFixed(2)} BYN</p>
+									<p><strong>Предварительная цена:</strong> ${order.sumPrice.toFixed(2)} BYN</p>
 									<h6>Подуслуги:</h6>
 									<ul class="list-group">
 										${order.nameSubservice.map(sub => `<li class="list-group-item">${sub}</li>`).join('')}

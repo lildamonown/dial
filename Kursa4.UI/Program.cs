@@ -42,6 +42,26 @@ using (var scope = app.Services.CreateScope())
                     CONSTRAINT FK_CarSeries_CarBrands FOREIGN KEY (CarBrandId) REFERENCES CarBrands(Id)
                 )
             END");
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PriceHistories')
+            BEGIN
+                CREATE TABLE PriceHistories (
+                    Id int IDENTITY(1,1) PRIMARY KEY,
+                    SubserviceId int NOT NULL,
+                    OldPrice float NOT NULL,
+                    NewPrice float NOT NULL,
+                    Comment nvarchar(max) NOT NULL,
+                    ChangedAt datetime2 NOT NULL,
+                    MasterName nvarchar(max) NOT NULL,
+                    MasterSurname nvarchar(max) NOT NULL,
+                    CONSTRAINT FK_PriceHistories_Subservices FOREIGN KEY (SubserviceId) REFERENCES Subservices(Id) ON DELETE CASCADE
+                )
+            END");
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Reports') AND name = 'Comment')
+            BEGIN
+                ALTER TABLE Reports ADD Comment nvarchar(max) NOT NULL DEFAULT ''
+            END");
         await AppDbContextInitializers.InitializeAsync(dbContext, userManager, rolesManager);
     }
     catch (Exception ex)

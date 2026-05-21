@@ -123,6 +123,8 @@ namespace Kursa4.UI.Controllers
                 SurnameMaster = masters.Surname ?? ""
             };
 
+            ViewBag.OriginalPrice = price;
+
             return View(report);
         }
 

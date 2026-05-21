@@ -2,6 +2,7 @@
 
 @{
 	ViewData["Title"] = "Создание отчета";
+	var originalPrice = ViewBag.OriginalPrice as double? ?? 0;
 }
 
 <div class="container mt-4">
@@ -23,10 +24,32 @@
 					<span asp-validation-for="OrderId" class="text-danger"></span>
 				</div>
 
+				<div class="card mb-3">
+					<div class="card-body">
+						<div class="row">
+							<div class="col-md-6">
+								<small class="text-muted">Предварительная цена:</small>
+								<p class="fs-5 mb-0">@originalPrice.ToString("N2") BYN</p>
+							</div>
+							<div class="col-md-6">
+								<small class="text-muted">Разница:</small>
+								<p class="fs-5 mb-0" id="priceDiff">0.00 BYN</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<div class="mb-3">
 					<label asp-for="FinitePrice" class="form-label"></label>
-					<input asp-for="FinitePrice" class="form-control" />
+					<input asp-for="FinitePrice" class="form-control" id="finitePriceInput" />
 					<span asp-validation-for="FinitePrice" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3" id="commentSection" style="display: none;">
+					<label asp-for="Comment" class="form-label"></label>
+					<textarea asp-for="Comment" class="form-control" rows="3" placeholder="Укажите причину изменения цены..."></textarea>
+					<span asp-validation-for="Comment" class="text-danger"></span>
+					<small class="text-muted">Укажите причину, если финальная цена отличается от предварительной</small>
 				</div>
 
 				<div class="mb-3">
@@ -73,7 +96,29 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+	var originalPrice = @originalPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+	function updatePriceDiff() {
+		var finite = parseFloat($('#finitePriceInput').val()) || 0;
+		var diff = finite - originalPrice;
+		var diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(2) + ' BYN';
+		var el = $('#priceDiff');
+		el.text(diffStr);
+		el.removeClass('text-success text-danger');
+		if (diff > 0) el.addClass('text-danger');
+		else if (diff < 0) el.addClass('text-success');
+		else el.addClass('text-muted');
+
+		if (Math.abs(diff) > 0.01) {
+			$('#commentSection').slideDown();
+		} else {
+			$('#commentSection').slideUp();
+		}
+	}
+
 	$(document).ready(function() {
+		$('#finitePriceInput').on('input', updatePriceDiff);
+		updatePriceDiff();
 		$('#orderInfoBtn').click(function() {
 			const orderId = $('#OrderId').val();
 

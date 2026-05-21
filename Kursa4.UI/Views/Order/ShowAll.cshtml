@@ -32,6 +32,7 @@
                         <th scope="col">Авто</th>
                         <th scope="col">Подуслуги</th>
                         <th scope="col">Сумма</th>
+                        <th scope="col">Комментарий мастера</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -94,6 +95,30 @@
                                 }
                             </td>
                             <td class="fw-bold">@order.SumPrice.ToString("N2") BYN</td>
+                            <td>
+                                @if (order.StatusName == "Выполнен" && !string.IsNullOrEmpty(order.ReportComment))
+                                {
+                                    <div>
+                                        <small class="text-muted">@order.MasterName</small><br />
+                                        <span>@order.ReportComment</span>
+                                        @if (order.FinitePrice.HasValue && order.FinitePrice != order.SumPrice)
+                                        {
+                                            var diff = order.FinitePrice.Value - order.SumPrice;
+                                            <br /><small class="@(diff > 0 ? "text-danger" : "text-success")">
+                                                @(diff > 0 ? "+" : "")@diff.ToString("N2") BYN
+                                            </small>
+                                        }
+                                    </div>
+                                }
+                                else if (order.StatusName == "Выполнен")
+                                {
+                                    <span class="text-muted fst-italic">Без комментария</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
