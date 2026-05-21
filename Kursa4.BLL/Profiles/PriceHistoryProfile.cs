@@ -1,0 +1,15 @@
+using AutoMapper;
+using Kursa4.BLL.DTO;
+using Kursa4.DAL.Entities;
+
+namespace Kursa4.BLL.Profiles
+{
+    public class PriceHistoryProfile : Profile
+    {
+        public PriceHistoryProfile()
+        {
+            CreateMap<PriceHistory, PriceHistoryDTO>()
+                .ReverseMap();
+        }
+    }
+}

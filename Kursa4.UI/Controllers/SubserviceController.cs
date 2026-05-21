@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
 using Kursa4.BLL.DTO;
 using Kursa4.BLL.Services.Interfaces;
+using Kursa4.DAL.Entities;
 using Kursa4.UI.Models;
 using Kursa4.UI.Models.Inputs;
 using Kursa4.UI.Models.Outputs;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 
 namespace Kursa4.UI.Controllers
 {
@@ -14,13 +17,18 @@ namespace Kursa4.UI.Controllers
     {
         private readonly IServiceService _serviceService;
         private readonly ISubserviceService _subserviceService;
+        private readonly IPriceHistoryService _priceHistoryService;
+        private readonly UserManager<User> _userManager;
 
         private readonly IMapper _mapper;
 
-        public SubserviceController(IServiceService serviceService, ISubserviceService subserviceService, IMapper mapper)
+        public SubserviceController(IServiceService serviceService, ISubserviceService subserviceService,
+            IPriceHistoryService priceHistoryService, UserManager<User> userManager, IMapper mapper)
         {
             _serviceService = serviceService;
             _subserviceService = subserviceService;
+            _priceHistoryService = priceHistoryService;
+            _userManager = userManager;
             _mapper = mapper;
         }
 
@@ -139,6 +147,19 @@ namespace Kursa4.UI.Controllers
                 return View(subservice);
             }
 
+            var oldSubserviceResult = await _subserviceService.GetByIdAsync(subservice.Id);
+            if (oldSubserviceResult.Status != BLL.Models.StatusCode.Ok)
+            {
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        Controller = "Subservice",
+                        Description = oldSubserviceResult.Description
+                    });
+            }
+
+            var oldPrice = oldSubserviceResult.Value.Price;
+
             var mapp = _mapper.Map<SubserviceDTO>(subservice);
 
             var resultUpdate = await _subserviceService.UpdateAsync(mapp);
@@ -153,7 +174,39 @@ namespace Kursa4.UI.Controllers
                     });
             }
 
+            if (oldPrice != subservice.Price)
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = await _userManager.FindByIdAsync(userId);
+
+                var priceHistory = new PriceHistoryDTO
+                {
+                    SubserviceId = subservice.Id,
+                    OldPrice = oldPrice,
+                    NewPrice = subservice.Price,
+                    Comment = subservice.PriceComment ?? "",
+                    ChangedAt = DateTime.Now,
+                    MasterName = user?.Name ?? "",
+                    MasterSurname = user?.Surname ?? ""
+                };
+
+                await _priceHistoryService.CreateAsync(priceHistory);
+            }
+
             return RedirectToAction("Index", "Service");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPriceHistory(int subserviceId)
+        {
+            var result = await _priceHistoryService.GetBySubserviceIdAsync(subserviceId);
+
+            if (result.Status != BLL.Models.StatusCode.Ok)
+            {
+                return Json(new { success = false, message = result.Description });
+            }
+
+            return Json(new { success = true, history = result.Value });
         }
 
         [HttpGet]

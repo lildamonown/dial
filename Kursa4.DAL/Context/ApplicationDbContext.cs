@@ -20,6 +20,8 @@ public class ApplicationDbContext : IdentityDbContext<User>
     
     public DbSet<Subservice> Subservices { get; set; }
 
+    public DbSet<PriceHistory> PriceHistories { get; set; }
+
     public DbSet<CarBrand> CarBrands { get; set; }
 
     public DbSet<CarSeries> CarSeries { get; set; }
@@ -41,5 +43,11 @@ public class ApplicationDbContext : IdentityDbContext<User>
                 j => j.HasOne<Subservice>().WithMany().HasForeignKey("SubserviceId"),
                 j => j.HasOne<Order>().WithMany().HasForeignKey("OrderId"),
                 j => j.ToTable("SubservicesOrders"));
+
+        modelBuilder.Entity<PriceHistory>()
+            .HasOne(ph => ph.Subservice)
+            .WithMany(s => s.PriceHistories)
+            .HasForeignKey(ph => ph.SubserviceId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

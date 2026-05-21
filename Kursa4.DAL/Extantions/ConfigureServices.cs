@@ -32,6 +32,7 @@ namespace Kursa4.DAL.Extantions
                 .AddScoped<ICarSeriesRepository, CarSeriesRepository>()
                 .AddScoped<ICarRepository, CarRepository>()
                 .AddScoped<IOrderRepository, OrderRepository>()
+                .AddScoped<IPriceHistoryRepository, PriceHistoryRepository>()
                 .AddScoped<IReportRepository, ReportRepository>()
                 .AddScoped<IReviewRepository, ReviewRepository>()
                 .AddScoped<IServiceRepository, ServiceRepository>()

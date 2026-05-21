@@ -62,5 +62,10 @@ namespace Kursa4.UI.Models.Inputs
 
         [Display(Name = "Видимость для клиентов")]
         public bool Visible { get; set; }
+
+        [Display(Name = "Комментарий к изменению цены")]
+        [StringLength(500, ErrorMessage = "Комментарий не должен превышать 500 символов")]
+        [DataType(DataType.MultilineText)]
+        public string? PriceComment { get; set; }
     }
 }

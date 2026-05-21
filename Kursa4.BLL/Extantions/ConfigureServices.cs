@@ -17,6 +17,7 @@ namespace Kursa4.BLL.Extantions
                 .AddScoped<ICarSeriesService, CarSeriesService>()
                 .AddScoped<ICarService, CarService>()
                 .AddScoped<IOrderService, OrderService>()
+                .AddScoped<IPriceHistoryService, PriceHistoryService>()
                 .AddScoped<IReportService, ReportService>()
                 .AddScoped<IReviewService, ReviewService>()
                 .AddScoped<IServiceService, ServiceService>()

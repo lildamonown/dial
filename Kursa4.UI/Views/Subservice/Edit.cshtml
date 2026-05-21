@@ -54,11 +54,18 @@
 					<div class="col-md-6 mb-3">
 						<label asp-for="Price" class="form-label"></label>
 						<div class="input-group">
-							<input asp-for="Price" class="form-control" type="number" step="0.01" />
+							<input asp-for="Price" class="form-control" type="number" step="0.01" id="priceInput" />
 							<span class="input-group-text">BYN</span>
 						</div>
 						<span asp-validation-for="Price" class="text-danger"></span>
 					</div>
+				</div>
+
+				<div class="mb-3" id="priceCommentSection" style="display: none;">
+					<label asp-for="PriceComment" class="form-label"></label>
+					<textarea asp-for="PriceComment" class="form-control" rows="3" placeholder="Укажите причину изменения цены..."></textarea>
+					<span asp-validation-for="PriceComment" class="text-danger"></span>
+					<small class="text-muted">Обязательно укажите причину при изменении цены</small>
 				</div>
 			</div>
 
@@ -87,3 +94,19 @@
 		</div>
 	</form>
 </div>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const priceInput = document.getElementById('priceInput');
+		const commentSection = document.getElementById('priceCommentSection');
+		const originalPrice = priceInput.value;
+
+		priceInput.addEventListener('input', function() {
+			if (this.value !== originalPrice) {
+				commentSection.style.display = 'block';
+			} else {
+				commentSection.style.display = 'none';
+			}
+		});
+	});
+</script>

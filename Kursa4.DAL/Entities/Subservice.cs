@@ -26,5 +26,7 @@ namespace Kursa4.DAL.Entities
         public int ServiceId { get; set; }
 
         public List<Order> Orders { get; set; } = [];
+
+        public List<PriceHistory> PriceHistories { get; set; } = [];
     }
 }

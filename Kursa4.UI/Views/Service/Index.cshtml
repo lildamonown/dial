@@ -101,6 +101,10 @@
 														<div class="price-type-badge small @(subservice.FixPrice ? "bg-success" : "bg-warning") bg-opacity-10 text-@(subservice.FixPrice ? "success" : "warning") p-1 rounded">
 															@(subservice.FixPrice ? "Фиксированная цена" : "Цена не фиксирована")
 														</div>
+														<button type="button" class="btn btn-sm btn-outline-info mt-2"
+																onclick="showPriceHistory(@subservice.Id, '@subservice.Name')">
+															<i class="bi bi-clock-history"></i> История цен
+														</button>
 													</div>
 												</div>
 											</div>
@@ -118,6 +122,25 @@
 				</div>
 			}
 		}
+	</div>
+</div>
+
+<div class="modal fade" id="priceHistoryModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">История изменения цен: <span id="priceHistorySubserviceName"></span></h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div id="priceHistoryContent">
+					<div class="text-center text-muted py-3">Загрузка...</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+			</div>
+		</div>
 	</div>
 </div>
 
@@ -147,4 +170,61 @@
 			});
 		});
 	});
+
+	function showPriceHistory(subserviceId, subserviceName) {
+		document.getElementById('priceHistorySubserviceName').textContent = subserviceName;
+		document.getElementById('priceHistoryContent').innerHTML = '<div class="text-center text-muted py-3">Загрузка...</div>';
+
+		var modal = new bootstrap.Modal(document.getElementById('priceHistoryModal'));
+		modal.show();
+
+		fetch('/Subservice/GetPriceHistory?subserviceId=' + subserviceId)
+			.then(function(response) { return response.json(); })
+			.then(function(data) {
+				if (!data.success) {
+					document.getElementById('priceHistoryContent').innerHTML =
+						'<div class="alert alert-danger">' + (data.message || 'Ошибка загрузки') + '</div>';
+					return;
+				}
+
+				var history = data.history;
+				if (!history || history.length === 0) {
+					document.getElementById('priceHistoryContent').innerHTML =
+						'<div class="alert alert-info">История изменений цен отсутствует.</div>';
+					return;
+				}
+
+				var html = '<div class="table-responsive"><table class="table table-striped">' +
+					'<thead><tr><th>Дата</th><th>Старая цена</th><th>Новая цена</th><th>Изменение</th><th>Мастер</th><th>Комментарий</th></tr></thead><tbody>';
+
+				for (var i = 0; i < history.length; i++) {
+					var h = history[i];
+					var date = new Date(h.ChangedAt);
+					var dateStr = date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+					var oldPrice = parseFloat(h.OldPrice).toFixed(2);
+					var newPrice = parseFloat(h.NewPrice).toFixed(2);
+					var diff = (h.NewPrice - h.OldPrice).toFixed(2);
+					var diffClass = diff > 0 ? 'text-danger' : (diff < 0 ? 'text-success' : '');
+					var diffSign = diff > 0 ? '+' : '';
+					var comment = h.Comment || '<span class="text-muted fst-italic">без комментария</span>';
+					var masterName = h.MasterName || h.MasterSurname ? (h.MasterName + ' ' + h.MasterSurname) : '<span class="text-muted fst-italic">неизвестно</span>';
+
+					html += '<tr>' +
+						'<td>' + dateStr + '</td>' +
+						'<td>' + oldPrice + ' BYN</td>' +
+						'<td>' + newPrice + ' BYN</td>' +
+						'<td class="' + diffClass + ' fw-bold">' + diffSign + diff + ' BYN</td>' +
+						'<td>' + masterName + '</td>' +
+						'<td>' + comment + '</td>' +
+						'</tr>';
+				}
+
+				html += '</tbody></table></div>';
+				document.getElementById('priceHistoryContent').innerHTML = html;
+			})
+			.catch(function() {
+				document.getElementById('priceHistoryContent').innerHTML =
+					'<div class="alert alert-danger">Ошибка при загрузке данных</div>';
+			});
+	}
 </script> 
