@@ -312,6 +312,8 @@ namespace Kursa4.UI.Controllers
                     orderModel.UserName = user.Name;
                     orderModel.UserSurname = user.Surname;
                     orderModel.UserPhoneNumber = user.PhoneNumber;
+                    var roles = await _userManager.GetRolesAsync(user);
+                    orderModel.UserRole = roles.FirstOrDefault();
                 }
 
                 var statusResult = await _statusService.GetByIdAsync(orderDto.StatusId);

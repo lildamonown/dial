@@ -22,5 +22,9 @@ namespace Kursa4.BLL.Services.Interfaces
         Task<Response<bool>> ChangeUserRoleAsync(string userId, string newRole);
 
         Task<Response<IEnumerable<User>>> GetAllAsync();
+
+        Task<Response<bool>> UpdateUserAsync(string userId, string name, string surname, string phoneNumber);
+
+        Task<Response<bool>> DeleteUserAsync(string userId);
     }
 }

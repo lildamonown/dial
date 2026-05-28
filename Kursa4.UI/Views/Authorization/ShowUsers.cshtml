@@ -1,11 +1,37 @@
 ﻿@model List<UserForDisplay>
+@using System.Text.RegularExpressions
 
 @{
 	ViewData["Title"] = "Список пользователей";
+
+	string RoleDisplay(string role) => role switch
+	{
+		"Client" => "Клиент",
+		"Admin" => "Администратор",
+		"Master" => "Мастер",
+		"Economist" => "Экономист",
+		"Owner" => "Владелец",
+		_ => role
+	};
 }
 
 <div class="container mt-4">
 	<h2 class="mb-4">Список пользователей</h2>
+
+	@if (TempData["Error"] != null)
+	{
+		<div class="alert alert-danger alert-dismissible fade show" role="alert">
+			@TempData["Error"]
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
+	}
+	@if (TempData["Success"] != null)
+	{
+		<div class="alert alert-success alert-dismissible fade show" role="alert">
+			@TempData["Success"]
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
+	}
 
 	<div class="row mb-3">
 		<div class="col-md-6">
@@ -42,6 +68,7 @@
 						Роль
 						<i class="bi bi-arrow-down-up sort-icon"></i>
 					</th>
+					<th scope="col">Действия</th>
 				</tr>
 			</thead>
 			<tbody id="userTableBody">
@@ -59,7 +86,18 @@
 							   data-user-surname="@user.Surname" data-user-role="@user.Role">
 								<i class="bi bi-pencil-square"></i>
 							</a>
-							@user.Role
+							@RoleDisplay(user.Role)
+						</td>
+						<td>
+							<a asp-action="EditUser" asp-route-userId="@user.Id" class="btn btn-sm btn-outline-primary me-1" title="Редактировать">
+								<i class="bi bi-pencil"></i>
+							</a>
+							<form asp-action="DeleteUser" method="post" class="d-inline" onsubmit="return confirm('Удалить пользователя @user.Name @user.Surname?')">
+								<input type="hidden" name="userId" value="@user.Id" />
+								<button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
+									<i class="bi bi-trash"></i>
+								</button>
+							</form>
 						</td>
 					</tr>
 				}
@@ -96,66 +134,84 @@
 	</div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-	$(document).ready(function() {
-		$(document).on('show.bs.modal', '#editRoleModal', function(event) {
-			var button = $(event.relatedTarget);
 
-			var userId = button.data('user-id');
-			var userName = button.data('user-name');
-			var userSurname = button.data('user-surname');
-			var userRole = button.data('user-role');
 
-			console.log("User data:", userId, userName, userSurname, userRole);
+@section Scripts {
+	<script>
+		function translateRole(role) {
+			var map = {
+				'Client': 'Клиент',
+				'Admin': 'Администратор',
+				'Master': 'Мастер',
+				'Economist': 'Экономист',
+				'Owner': 'Владелец'
+			};
+			return map[role] || role;
+		}
 
-			var modal = $(this);
-			modal.find('#userFullName').text(userName + ' ' + userSurname);
-			modal.find('#userId').val(userId);
+		$(document).ready(function() {
+			$(document).on('show.bs.modal', '#editRoleModal', function(event) {
+				var button = $(event.relatedTarget);
 
-			var roleSelect = modal.find('#roleSelect');
-			roleSelect.empty();
+				var userId = button.data('user-id');
+				var userName = button.data('user-name');
+				var userSurname = button.data('user-surname');
+				var userRole = button.data('user-role');
 
-			var roles = ['Client', 'Admin', 'Master', 'Economist'];
+				console.log("User data:", userId, userName, userSurname, userRole);
 
-			roles.forEach(function(role) {
-				var option = new Option(role, role);
-				if (role === userRole) {
-					option.selected = true;
-				}
-				roleSelect.append(option);
+				var modal = $(this);
+				modal.find('#userFullName').text(userName + ' ' + userSurname);
+				modal.find('#userId').val(userId);
+
+				var roleSelect = modal.find('#roleSelect');
+				roleSelect.empty();
+
+				var roles = [
+					{ value: 'Client', label: 'Клиент' },
+					{ value: 'Admin', label: 'Администратор' },
+					{ value: 'Master', label: 'Мастер' },
+					{ value: 'Economist', label: 'Экономист' }
+				];
+
+				roles.forEach(function(r) {
+					var option = new Option(r.label, r.value);
+					if (r.value === userRole) {
+						option.selected = true;
+					}
+					roleSelect.append(option);
+				});
+			});
+
+			// Обработчик сохранения роли
+			$('#saveRoleBtn').on('click', function() {
+				var userId = $('#userId').val();
+				var newRole = $('#roleSelect').val();
+
+				$.ajax({
+					url: '/Authorization/UpdateRole',
+					type: 'POST',
+					data: {
+						userId: userId,
+						newRole: newRole
+					},
+					success: function(response) {
+						if (response.success) {
+							location.reload();
+						} else {
+							alert('Ошибка при обновлении роли: ' + response.message);
+						}
+					},
+					error: function() {
+						alert('Произошла ошибка при отправке данных');
+					}
+				});
+
+				$('#editRoleModal').modal('hide');
 			});
 		});
-	});
-
-	// Обработчик сохранения роли
-	$('#saveRoleBtn').on('click', function() {
-		var userId = $('#userId').val();
-		var newRole = $('#roleSelect').val();
-
-		// Отправка данных на сервер
-		$.ajax({
-			url: '/Authorization/UpdateRole',
-			type: 'POST',
-			data: {
-				userId: userId,
-				newRole: newRole
-			},
-			success: function(response) {
-				if (response.success) {
-					location.reload();
-				} else {
-					alert('Ошибка при обновлении роли: ' + response.message);
-				}
-			},
-			error: function() {
-				alert('Произошла ошибка при отправке данных');
-			}
-		});
-
-		$('#editRoleModal').modal('hide');
-	});
-</script>
+	</script>
+}
 
 <script>
 	let sortDirections = Array(6).fill(true);

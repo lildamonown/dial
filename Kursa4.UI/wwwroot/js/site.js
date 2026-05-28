@@ -23,6 +23,17 @@ $(document).ready(function () {
     }
 });
 
+function translateRole(role) {
+    var map = {
+        'Client': 'Клиент',
+        'Admin': 'Администратор',
+        'Master': 'Мастер',
+        'Economist': 'Экономист',
+        'Owner': 'Владелец'
+    };
+    return map[role] || role;
+}
+
 function GetUserInfo(selectorId, userId) {
     $.ajax({
         url: '/Authorization/GetUserById',
@@ -33,7 +44,9 @@ function GetUserInfo(selectorId, userId) {
             if (response.success) {
                 var user = response.user;
 
-                $(`#${selectorId}`).text(user.surname + ' ' + user.name)
+                var displayText = user.surname + ' ' + user.name;
+                var roleText = user.role ? translateRole(user.role) : '';
+                $(`#${selectorId}`).html(displayText + '<br><small>' + roleText + '</small>');
 
             } else {
                 console.error('Ошибка:', response.message);

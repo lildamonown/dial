@@ -103,10 +103,14 @@ namespace Kursa4.UI.Controllers
                 return Json(new { success = false, message = "User not found" });
             
 
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "";
+
             var userInfo = new
             {
                 user.Name,
-                user.Surname
+                user.Surname,
+                Role = role
             };
 
             return Json(new { success = true, user = userInfo });
@@ -150,7 +154,60 @@ namespace Kursa4.UI.Controllers
             return View("ShowUsers", usersForDisplay);
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> EditUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            var model = new UserEdit
+            {
+                Id = user.Id,
+                FirstName = user.Name,
+                Surname = user.Surname,
+                PhoneNumber = user.PhoneNumber
+            };
+
+            return View(model);
+        }
+
         [HttpPost]
+        [Authorize(Roles = "Admin,Owner")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditUser(UserEdit model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var result = await _accountService.UpdateUserAsync(model.Id, model.FirstName, model.Surname, model.PhoneNumber);
+
+            if (result.Status == BLL.Models.StatusCode.Ok)
+                return RedirectToAction("GetAllUsers");
+
+            ModelState.AddModelError(string.Empty, result.Description);
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Owner")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var result = await _accountService.DeleteUserAsync(userId);
+
+            if (result.Status == BLL.Models.StatusCode.Ok)
+                TempData["Success"] = result.Description;
+            else
+                TempData["Error"] = result.Description;
+
+            return RedirectToAction("GetAllUsers");
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> UpdateRole(string userId, string newRole)
         {
             try

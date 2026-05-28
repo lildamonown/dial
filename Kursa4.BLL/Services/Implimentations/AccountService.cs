@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Text;
 
+
 namespace Kursa4.BLL.Services.Implimentations
 {
     public class AccountService : IAccountService
@@ -18,12 +19,14 @@ namespace Kursa4.BLL.Services.Implimentations
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ApplicationDbContext _context;
 
-        public AccountService(UserManager<User> userManager, SignInManager<User> signInManager, RoleManager<IdentityRole> roleManager)
+        public AccountService(UserManager<User> userManager, SignInManager<User> signInManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _context = context;
         }
 
         public async Task<Response<User>> GetById(string id)
@@ -215,6 +218,97 @@ namespace Kursa4.BLL.Services.Implimentations
 
                 response.Value = true;
                 response.Description = "Роль пользователя успешно изменена";
+                response.Status = StatusCode.Ok;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.Value = false;
+                response.Description = ex.Message;
+                response.Status = StatusCode.IternalServerError;
+                return response;
+            }
+        }
+
+        public async Task<Response<bool>> UpdateUserAsync(string userId, string name, string surname, string phoneNumber)
+        {
+            var response = new Response<bool>();
+            try
+            {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    response.Value = false;
+                    response.Description = "Неверный ID пользователя";
+                    response.Status = StatusCode.BadRequest;
+                    return response;
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    response.Value = false;
+                    response.Description = "Пользователь не найден";
+                    response.Status = StatusCode.NotFound;
+                    return response;
+                }
+
+                user.Name = name;
+                user.Surname = surname;
+                user.PhoneNumber = phoneNumber;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    var errors = new StringBuilder(16);
+                    result.Errors.ToList().ForEach(i => errors.Append(i.Description));
+
+                    response.Value = false;
+                    response.Description = errors.ToString();
+                    response.Status = StatusCode.BadRequest;
+                    return response;
+                }
+
+                response.Value = true;
+                response.Description = "Данные пользователя успешно обновлены";
+                response.Status = StatusCode.Ok;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.Value = false;
+                response.Description = ex.Message;
+                response.Status = StatusCode.IternalServerError;
+                return response;
+            }
+        }
+
+        public async Task<Response<bool>> DeleteUserAsync(string userId)
+        {
+            var response = new Response<bool>();
+            try
+            {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    response.Value = false;
+                    response.Description = "Неверный ID пользователя";
+                    response.Status = StatusCode.BadRequest;
+                    return response;
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user == null)
+                {
+                    response.Value = false;
+                    response.Description = "Пользователь не найден";
+                    response.Status = StatusCode.NotFound;
+                    return response;
+                }
+
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                response.Value = true;
+                response.Description = "Пользователь успешно удалён";
                 response.Status = StatusCode.Ok;
                 return response;
             }

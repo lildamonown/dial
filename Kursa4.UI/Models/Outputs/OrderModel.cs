@@ -42,5 +42,7 @@ namespace Kursa4.UI.Models.Outputs
 
         [Display(Name = "Мастер")]
         public string? MasterName { get; set; }
+
+        public string? UserRole { get; set; }
     }
 }

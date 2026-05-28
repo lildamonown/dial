@@ -204,7 +204,7 @@
                     </div>
 
                     <div class="text-end mx-4">
-                        <a id="user-info" data-user-id="@User.FindFirstValue(ClaimTypes.NameIdentifier)"></a>
+                        <div id="user-info" data-user-id="@User.FindFirstValue(ClaimTypes.NameIdentifier)"></div>
                     </div>
 
                     <form asp-controller="Authorization" asp-action="Logout">
